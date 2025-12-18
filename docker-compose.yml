@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:16-alpine
+    container_name: seeker-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-seeker}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - seeker-network
+
+  # RabbitMQ (可选，如果使用 RabbitMQ 作为队列)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: seeker-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - seeker-network
+    profiles:
+      - rabbitmq
+
+  # 应用服务
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: seeker-app
+    environment:
+      # 应用配置
+      NODE_ENV: production
+      PORT: 3000
+      
+      # 数据库配置
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-seeker}
+      
+      # 认证配置
+      BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:-your-secret-key-change-this-in-production}
+      BETTER_AUTH_TRUSTED_ORIGINS: ${BETTER_AUTH_TRUSTED_ORIGINS:-}
+      
+      # AI 配置
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      
+      # 新闻 API 配置（可选）
+      NEWS_API_URL: ${NEWS_API_URL:-}
+      NEWS_API_KEY: ${NEWS_API_KEY:-}
+      
+      # 队列配置
+      QUEUE_TYPE: ${QUEUE_TYPE:-pgboss}
+      RABBITMQ_URL: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASSWORD:-guest}@rabbitmq:5672
+      QUEUE_PREFIX: ${QUEUE_PREFIX:-}
+      RABBITMQ_QUEUE_PREFIX: ${RABBITMQ_QUEUE_PREFIX:-}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # 可选：挂载上传文件目录
+      - ./uploads:/app/uploads
+    networks:
+      - seeker-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+networks:
+  seeker-network:
+    driver: bridge
+
