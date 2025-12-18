@@ -17,6 +17,12 @@ import { Node } from "./Node";
 import { Edge } from "./Edge";
 import type { SolidFlowProps, Node as NodeType, Edge as EdgeType, Connection } from "./types";
 import { isValidConnection } from "./utils";
+
+interface Viewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
 import "./styles.css";
 
 export function SolidFlow(props: SolidFlowProps) {
@@ -177,6 +183,13 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
   const viewport = () => context.store.store.viewport;
   const nodes = () => context.store.store.nodes;
   const edges = () => context.store.store.edges;
+
+  // 更新 DOM 上的视口信息
+  createEffect(() => {
+    if (paneRef) {
+      (paneRef as HTMLElement & { __viewport?: Viewport }).__viewport = viewport();
+    }
+  });
 
   // 拖拽处理
   let isDragging = false;
@@ -416,7 +429,13 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
         }}
       >
         <div
-          ref={paneRef}
+          ref={(el) => {
+            paneRef = el;
+            if (el) {
+              // 存储视口信息到 DOM，方便工具函数访问
+              (el as HTMLElement & { __viewport?: Viewport }).__viewport = viewport();
+            }
+          }}
           class="solid-flow__pane"
           style={{
             width: "100%",

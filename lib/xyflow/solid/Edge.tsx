@@ -2,7 +2,7 @@
  * Edge 组件 - 边/连接线渲染
  */
 
-import { Show, createMemo } from "solid-js";
+import { Show, createMemo, createEffect, createSignal } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { useSolidFlowContext } from "./context";
 import type { Edge as EdgeType, Node } from "./types";
@@ -70,7 +70,47 @@ function DefaultEdge(props: {
   targetNode: Node;
   selected?: boolean;
 }) {
+  const [sourcePos, setSourcePos] = createSignal<{ x: number; y: number } | null>(null);
+  const [targetPos, setTargetPos] = createSignal<{ x: number; y: number } | null>(null);
+
+  // 使用 createEffect 确保在 DOM 渲染后获取位置
+  // 监听节点位置和尺寸变化
+  createEffect(() => {
+    // 访问节点属性以建立响应式依赖
+    const _ = props.sourceNode.position.x;
+    const __ = props.sourceNode.position.y;
+    const ___ = props.sourceNode.width;
+    const ____ = props.sourceNode.height;
+    
+    // 延迟一帧，确保 Handle 已渲染
+    requestAnimationFrame(() => {
+      const node = props.sourceNode;
+      const handleId = props.edge.sourceHandle || null;
+      const position = node.sourcePosition || "bottom";
+      const pos = getHandlePosition(node, handleId, "source", position);
+      setSourcePos(pos);
+    });
+  });
+
+  createEffect(() => {
+    // 访问节点属性以建立响应式依赖
+    const _ = props.targetNode.position.x;
+    const __ = props.targetNode.position.y;
+    const ___ = props.targetNode.width;
+    const ____ = props.targetNode.height;
+    
+    requestAnimationFrame(() => {
+      const node = props.targetNode;
+      const handleId = props.edge.targetHandle || null;
+      const position = node.targetPosition || "top";
+      const pos = getHandlePosition(node, handleId, "target", position);
+      setTargetPos(pos);
+    });
+  });
+
   const sourcePosition = () => {
+    if (sourcePos()) return sourcePos()!;
+    // 回退到计算位置
     const node = props.sourceNode;
     const handleId = props.edge.sourceHandle || null;
     const position = node.sourcePosition || "bottom";
@@ -78,6 +118,8 @@ function DefaultEdge(props: {
   };
 
   const targetPosition = () => {
+    if (targetPos()) return targetPos()!;
+    // 回退到计算位置
     const node = props.targetNode;
     const handleId = props.edge.targetHandle || null;
     const position = node.targetPosition || "top";
