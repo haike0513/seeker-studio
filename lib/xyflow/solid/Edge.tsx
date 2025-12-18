@@ -2,7 +2,8 @@
  * Edge 组件 - 边/连接线渲染
  */
 
-import { Show } from "solid-js";
+import { Show, createMemo } from "solid-js";
+import { Dynamic } from "solid-js/web";
 import { useSolidFlowContext } from "./context";
 import type { Edge as EdgeType, Node } from "./types";
 import { getHandlePosition } from "./utils";
@@ -43,11 +44,15 @@ function EdgeInner(props: {
   selected?: boolean;
   context: ReturnType<typeof useSolidFlowContext>;
 }) {
-  const customEdge = props.context.edgeTypes[props.edgeType];
-  const EdgeComponent = customEdge || DefaultEdge;
+  const EdgeComponent = createMemo(() => {
+    const edgeTypes = props.context.edgeTypes();
+    const customEdge = edgeTypes[props.edgeType];
+    return customEdge || DefaultEdge;
+  });
 
   return (
-    <EdgeComponent
+    <Dynamic
+      component={EdgeComponent()}
       edge={props.edge}
       sourceNode={props.sourceNode}
       targetNode={props.targetNode}
@@ -68,22 +73,50 @@ function DefaultEdge(props: {
   const sourcePosition = () => {
     const node = props.sourceNode;
     const handleId = props.edge.sourceHandle || null;
-    return getHandlePosition(node, handleId, "source", "bottom");
+    const position = node.sourcePosition || "bottom";
+    return getHandlePosition(node, handleId, "source", position);
   };
 
   const targetPosition = () => {
     const node = props.targetNode;
     const handleId = props.edge.targetHandle || null;
-    return getHandlePosition(node, handleId, "target", "top");
+    const position = node.targetPosition || "top";
+    return getHandlePosition(node, handleId, "target", position);
   };
 
   const path = () => {
     const source = sourcePosition();
     const target = targetPosition();
-    const midY = (source.y + target.y) / 2;
-
-    // 简单的贝塞尔曲线路径
-    return `M ${source.x} ${source.y} C ${source.x} ${midY}, ${target.x} ${midY}, ${target.x} ${target.y}`;
+    
+    // 计算控制点，使曲线更平滑
+    const dx = target.x - source.x;
+    const dy = target.y - source.y;
+    const curvature = 0.5; // 曲率系数
+    
+    // 根据方向确定控制点
+    let controlPoint1X = source.x;
+    let controlPoint1Y = source.y;
+    let controlPoint2X = target.x;
+    let controlPoint2Y = target.y;
+    
+    // 水平连接
+    if (Math.abs(dx) > Math.abs(dy)) {
+      const offset = Math.abs(dx) * curvature;
+      controlPoint1X = source.x + offset;
+      controlPoint1Y = source.y;
+      controlPoint2X = target.x - offset;
+      controlPoint2Y = target.y;
+    } else {
+      // 垂直连接
+      const offset = Math.abs(dy) * curvature;
+      controlPoint1X = source.x;
+      controlPoint1Y = source.y + offset;
+      controlPoint2X = target.x;
+      controlPoint2Y = target.y - offset;
+    }
+    
+    // 使用三次贝塞尔曲线
+    return `M ${source.x} ${source.y} C ${controlPoint1X} ${controlPoint1Y}, ${controlPoint2X} ${controlPoint2Y}, ${target.x} ${target.y}`;
   };
 
   return (
@@ -99,9 +132,6 @@ function DefaultEdge(props: {
         stroke-width={props.selected ? "3" : "2"}
         fill="none"
         marker-end="url(#solid-flow__arrowclosed)"
-        classList={{
-          "solid-flow__edge-selected": props.selected,
-        }}
       />
       <Show when={props.edge.label}>
         <text

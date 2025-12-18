@@ -65,7 +65,9 @@ export function getHandlePosition(
 export function isValidConnection(
   connection: Connection,
   nodes: Node[],
-  edges: Edge[]
+  edges: Edge[],
+  connectionMode: "loose" | "strict" = "loose",
+  _connectionRadius: number = 20
 ): boolean {
   if (!connection.source || !connection.target) {
     return false;
@@ -74,6 +76,20 @@ export function isValidConnection(
   // 不能连接到自身
   if (connection.source === connection.target) {
     return false;
+  }
+
+  const sourceNode = nodes.find((n) => n.id === connection.source);
+  const targetNode = nodes.find((n) => n.id === connection.target);
+
+  if (!sourceNode || !targetNode) {
+    return false;
+  }
+
+  // strict 模式：必须从 source handle 连接到 target handle
+  if (connectionMode === "strict") {
+    if (!connection.sourceHandle || !connection.targetHandle) {
+      return false;
+    }
   }
 
   // 检查是否已存在相同的连接
@@ -86,6 +102,11 @@ export function isValidConnection(
   );
 
   if (existingEdge) {
+    return false;
+  }
+
+  // 检查节点是否可连接
+  if (sourceNode.connectable === false || targetNode.connectable === false) {
     return false;
   }
 

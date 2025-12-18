@@ -3,9 +3,9 @@
  * 用于节点之间的连接
  */
 
-import { createEffect, onCleanup, splitProps, type ComponentProps } from "solid-js";
+import { createEffect, onCleanup, splitProps } from "solid-js";
 import { useSolidFlowContext } from "./context";
-import type { HandleProps, Position, Connection } from "./types";
+import type { HandleProps, Connection } from "./types";
 import { getHandleId } from "./utils";
 import "./styles.css";
 
@@ -19,12 +19,19 @@ export function Handle(props: HandleProps & { class?: string }) {
     "className",
     "class",
     "isConnectable",
+    "isConnectableStart",
+    "isConnectableEnd",
     "onConnect",
   ]);
 
   const handleId = () => getHandleId(local.id);
   const position = () => local.position || "top";
-  const isConnectable = () => local.isConnectable !== false;
+  const isConnectable = () => {
+    if (local.isConnectable === false) return false;
+    if (local.type === "source" && local.isConnectableStart === false) return false;
+    if (local.type === "target" && local.isConnectableEnd === false) return false;
+    return true;
+  };
 
   let handleElement: HTMLDivElement | undefined;
 
@@ -32,9 +39,14 @@ export function Handle(props: HandleProps & { class?: string }) {
     if (!isConnectable()) return;
 
     event.stopPropagation();
+    event.preventDefault();
 
-    const nodeId = (event.currentTarget as HTMLElement).closest("[data-node-id]")?.getAttribute("data-node-id");
+    const nodeElement = (event.currentTarget as HTMLElement).closest("[data-node-id]");
+    const nodeId = nodeElement?.getAttribute("data-node-id");
     if (!nodeId) return;
+
+    const node = context.store.store.nodes.find((n) => n.id === nodeId);
+    if (!node) return;
 
     const connection: Connection = {
       source: local.type === "source" ? nodeId : null,
@@ -44,17 +56,44 @@ export function Handle(props: HandleProps & { class?: string }) {
     };
 
     context.store.setConnectionStart(connection);
+    
+    // 触发 onConnectStart 回调
+    const flowProps = context.props;
+    if (flowProps.onConnectStart) {
+      flowProps.onConnectStart(event, {
+        nodeId,
+        handleType: local.type,
+        handleId: handleId(),
+      });
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
-      // 连接过程中的视觉反馈
+      // 更新临时连接位置
+      const paneElement = document.querySelector(".solid-flow__pane");
+      if (paneElement) {
+        const rect = paneElement.getBoundingClientRect();
+        const x = (e.clientX - rect.left - context.store.store.viewport.x) / context.store.store.viewport.zoom;
+        const y = (e.clientY - rect.top - context.store.store.viewport.y) / context.store.store.viewport.zoom;
+        context.store.setConnectionEnd({ x, y });
+      }
     };
 
     const handleMouseUp = (e: MouseEvent) => {
       const targetElement = document.elementFromPoint(e.clientX, e.clientY);
-      const targetNodeId = targetElement?.closest("[data-node-id]")?.getAttribute("data-node-id");
-      const targetHandleId = targetElement?.getAttribute("data-handle-id");
+      const targetNodeElement = targetElement?.closest("[data-node-id]");
+      const targetNodeId = targetNodeElement?.getAttribute("data-node-id");
+      const targetHandleElement = targetElement?.closest("[data-handle-id]");
+      const targetHandleId = targetHandleElement?.getAttribute("data-handle-id");
+      const targetHandleType = targetHandleElement?.getAttribute("data-handle-type");
 
-      if (targetNodeId && targetNodeId !== nodeId) {
+      // 触发 onConnectEnd 回调
+      const flowProps = context.props;
+      if (flowProps.onConnectEnd) {
+        flowProps.onConnectEnd(e);
+      }
+
+      // 检查是否连接到有效的目标
+      if (targetNodeId && targetNodeId !== nodeId && targetHandleType && targetHandleType !== local.type) {
         const finalConnection: Connection = {
           source: local.type === "source" ? nodeId : targetNodeId,
           target: local.type === "target" ? nodeId : targetNodeId,
@@ -62,10 +101,23 @@ export function Handle(props: HandleProps & { class?: string }) {
           targetHandle: local.type === "target" ? handleId() : (targetHandleId || null),
         };
 
-        local.onConnect?.(finalConnection);
+        // 验证连接
+        const isValid = context.props.connectionMode === "strict" 
+          ? (targetHandleType !== local.type && targetNodeId !== nodeId)
+          : true;
+
+        if (isValid) {
+          local.onConnect?.(finalConnection);
+          // 也调用全局的 onConnect
+          const flowProps = context.props;
+          if (flowProps.onConnect) {
+            flowProps.onConnect(finalConnection);
+          }
+        }
       }
 
       context.store.setConnectionStart(null);
+      context.store.setConnectionEnd(null);
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
@@ -103,13 +155,23 @@ export function Handle(props: HandleProps & { class?: string }) {
     }
   };
 
+  const isConnecting = () => {
+    const connectionStart = context.store.store.connectionStart;
+    if (!connectionStart) return false;
+    if (local.type === "source") {
+      return connectionStart.source === (handleElement?.closest("[data-node-id]")?.getAttribute("data-node-id") || null);
+    } else {
+      return connectionStart.target === (handleElement?.closest("[data-node-id]")?.getAttribute("data-node-id") || null);
+    }
+  };
+
   return (
     <div
       ref={handleElement}
       class={`solid-flow__handle ${positionClass()} ${local.className || local.class || ""}`}
       classList={{
         "solid-flow__handle-connectable": isConnectable(),
-        "solid-flow__handle-connecting": context.store.store.connectionStart !== null,
+        "solid-flow__handle-connecting": isConnecting(),
       }}
       style={{
         ...local.style,

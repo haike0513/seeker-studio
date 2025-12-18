@@ -5,14 +5,14 @@
 
 import { createContext, useContext, type ParentProps } from "solid-js";
 import type { SolidFlowStoreType } from "./store";
-import type { NodeTypes, EdgeTypes, SolidFlowProps } from "./types";
+import type { NodeTypes, EdgeTypes, SolidFlowProps, Node } from "./types";
 
 export interface SolidFlowContextValue {
   store: SolidFlowStoreType;
-  nodeTypes: NodeTypes;
-  edgeTypes: EdgeTypes;
+  nodeTypes: () => NodeTypes;
+  edgeTypes: () => EdgeTypes;
   props: Partial<SolidFlowProps>;
-  handleNodeClick?: (event: MouseEvent, node: any) => void;
+  handleNodeClick?: (event: MouseEvent, node: Node) => void;
 }
 
 const SolidFlowContext = createContext<SolidFlowContextValue>();
@@ -22,8 +22,9 @@ export function SolidFlowProvider(
     value: SolidFlowContextValue;
   }>
 ) {
+  const value = () => props.value;
   return (
-    <SolidFlowContext.Provider value={props.value}>
+    <SolidFlowContext.Provider value={value()}>
       {props.children}
     </SolidFlowContext.Provider>
   );

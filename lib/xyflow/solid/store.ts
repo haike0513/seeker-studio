@@ -11,6 +11,7 @@ export interface SolidFlowStore {
   edges: Edge[];
   viewport: Viewport;
   connectionStart: Connection | null;
+  connectionEnd: { x: number; y: number } | null;
   selectedNodes: Node[];
   selectedEdges: Edge[];
 }
@@ -25,6 +26,7 @@ export function createSolidFlowStore(initialNodes: Node[] = [], initialEdges: Ed
       zoom: 1,
     },
     connectionStart: null,
+    connectionEnd: null,
     selectedNodes: [],
     selectedEdges: [],
   });
@@ -70,6 +72,9 @@ export function createSolidFlowStore(initialNodes: Node[] = [], initialEdges: Ed
     // 连接操作
     setConnectionStart: (connection: Connection | null) => {
       setStore("connectionStart", connection);
+    },
+    setConnectionEnd: (position: { x: number; y: number } | null) => {
+      setStore("connectionEnd", position);
     },
     // 选择操作
     setSelectedNodes: (nodes: Node[]) => {

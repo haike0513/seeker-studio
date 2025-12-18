@@ -20,6 +20,7 @@
     "@sentry/solid": "^10.29.0",
     "@tanstack/solid-query": "^5.90.15",
     "@universal-middleware/core": "^0.4.13",
+    "@xyflow/system": "^0.0.74",
     "ai": "6.0.0-beta.150",
     "amqp-connection-manager": "^5.0.0",
     "amqplib": "^0.10.9",

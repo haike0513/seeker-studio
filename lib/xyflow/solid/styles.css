@@ -126,6 +126,11 @@
   animation: dashdraw 0.5s linear infinite;
 }
 
+.solid-flow__edge-temp {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 @keyframes dashdraw {
   to {
     stroke-dashoffset: -10;

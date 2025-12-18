@@ -2,7 +2,7 @@
  * Node 组件 - 节点渲染
  */
 
-import { createMemo } from "solid-js";
+import { createMemo, createEffect } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { useSolidFlowContext } from "./context";
 import type { Node as NodeType } from "./types";
@@ -17,6 +17,7 @@ export interface NodeProps {
 export function Node(props: NodeProps) {
   const context = useSolidFlowContext();
   const nodeType = () => props.node.type || "default";
+  let nodeElement: HTMLDivElement | undefined;
 
   const handleClick = (event: MouseEvent) => {
     if (context.handleNodeClick) {
@@ -24,8 +25,22 @@ export function Node(props: NodeProps) {
     }
   };
 
+  // 自动检测节点尺寸
+  createEffect(() => {
+    if (nodeElement && (!props.node.width || !props.node.height)) {
+      const rect = nodeElement.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        context.store.updateNode(props.node.id, {
+          width: rect.width,
+          height: rect.height,
+        });
+      }
+    }
+  });
+
   return (
     <div
+      ref={nodeElement}
       class={`solid-flow__node solid-flow__node-${nodeType()}`}
       classList={{
         "solid-flow__node-selected": props.selected || props.node.selected,
@@ -54,7 +69,8 @@ function NodeInner(props: {
   context: ReturnType<typeof useSolidFlowContext>;
 }) {
   const NodeComponent = createMemo(() => {
-    const customNode = props.context.nodeTypes[props.nodeType];
+    const nodeTypes = props.context.nodeTypes();
+    const customNode = nodeTypes[props.nodeType];
     return customNode || DefaultNode;
   });
 
