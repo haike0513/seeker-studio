@@ -18,6 +18,12 @@ export function Node(props: NodeProps) {
   const context = useSolidFlowContext();
   const nodeType = () => props.node.type || "default";
 
+  const handleClick = (event: MouseEvent) => {
+    if (context.handleNodeClick) {
+      context.handleNodeClick(event, props.node);
+    }
+  };
+
   return (
     <div
       class={`solid-flow__node solid-flow__node-${nodeType()}`}
@@ -31,6 +37,7 @@ export function Node(props: NodeProps) {
         transform: `translate(${props.node.position.x}px, ${props.node.position.y}px)`,
         ...props.node.style,
       }}
+      onClick={handleClick}
     >
       <NodeInner
         node={props.node}

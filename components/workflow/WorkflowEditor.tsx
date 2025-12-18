@@ -79,6 +79,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
   });
 
   const handleNodeClick = (nodeId: string) => {
+    console.log("handleNodeClick", nodeId);
     const node = nodes().find((n) => n.id === nodeId);
     if (!node) {
       props.onNodeSelect?.(null);

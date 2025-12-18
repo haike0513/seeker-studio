@@ -12,6 +12,7 @@ export interface SolidFlowContextValue {
   nodeTypes: NodeTypes;
   edgeTypes: EdgeTypes;
   props: Partial<SolidFlowProps>;
+  handleNodeClick?: (event: MouseEvent, node: any) => void;
 }
 
 const SolidFlowContext = createContext<SolidFlowContextValue>();

@@ -8,9 +8,7 @@ import {
   onMount,
   onCleanup,
   For,
-  Show,
   splitProps,
-  type ComponentProps,
 } from "solid-js";
 import { SolidFlowProvider, useSolidFlowContext } from "./context";
 import { createSolidFlowStore } from "./store";
@@ -106,8 +104,6 @@ export function SolidFlow(props: SolidFlowProps) {
       }
 
       const padding = local.fitViewOptions?.padding || 50;
-      const width = maxX - minX + padding * 2;
-      const height = maxY - minY + padding * 2;
 
       store.updateViewport({
         x: -minX + padding,
@@ -117,15 +113,15 @@ export function SolidFlow(props: SolidFlowProps) {
     }
   });
 
-  const contextValue = {
-    store,
-    nodeTypes: local.nodeTypes || {},
-    edgeTypes: local.edgeTypes || {},
-    props: local,
-  };
-
   return (
-    <SolidFlowProvider value={contextValue}>
+    <SolidFlowProvider
+      value={{
+        store,
+        nodeTypes: local.nodeTypes || {},
+        edgeTypes: local.edgeTypes || {},
+        props: local,
+      }}
+    >
       <SolidFlowInner
         {...local}
         store={store}
@@ -147,8 +143,10 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
 
   // 拖拽处理
   let isDragging = false;
+  let hasMoved = false; // 标记是否真的发生了移动
   let dragStart = { x: 0, y: 0 };
   let nodeDragStart: { node: NodeType; offset: { x: number; y: number } } | null = null;
+  const DRAG_THRESHOLD = 5; // 拖拽阈值，超过这个距离才认为是拖拽
 
   const handleMouseDown = (event: MouseEvent) => {
     const target = event.target as HTMLElement;
@@ -158,7 +156,9 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
       const nodeId = nodeElement.getAttribute("data-node-id");
       const node = nodes().find((n) => n.id === nodeId);
       if (node) {
-        isDragging = true;
+        // 不立即设置 isDragging，等待鼠标移动
+        // 这样可以让节点的 onClick 正常触发
+        hasMoved = false;
         dragStart = { x: event.clientX, y: event.clientY };
         nodeDragStart = {
           node,
@@ -167,16 +167,36 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
             y: event.clientY - node.position.y,
           },
         };
-        props.onNodeDragStart?.(event, node);
+        // 不立即调用 onNodeDragStart，等真正开始拖拽时再调用
       }
     } else if (props.panOnDrag !== false) {
       isDragging = true;
+      hasMoved = false;
       dragStart = { x: event.clientX, y: event.clientY };
     }
   };
 
   const handleMouseMove = (event: MouseEvent) => {
+    // 如果 nodeDragStart 存在但还没有开始拖拽，检查是否需要开始拖拽
+    if (nodeDragStart && !isDragging) {
+      const deltaX = Math.abs(event.clientX - dragStart.x);
+      const deltaY = Math.abs(event.clientY - dragStart.y);
+      if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+        // 开始拖拽
+        isDragging = true;
+        hasMoved = true;
+        props.onNodeDragStart?.(event, nodeDragStart.node);
+      }
+    }
+
     if (!isDragging) return;
+
+    // 检查是否移动超过阈值
+    const deltaX = Math.abs(event.clientX - dragStart.x);
+    const deltaY = Math.abs(event.clientY - dragStart.y);
+    if (deltaX > DRAG_THRESHOLD || deltaY > DRAG_THRESHOLD) {
+      hasMoved = true;
+    }
 
     if (nodeDragStart) {
       const newPosition = {
@@ -201,16 +221,24 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
 
   const handleMouseUp = (event: MouseEvent) => {
     if (isDragging && nodeDragStart) {
-      const currentNode = context.store.store.nodes.find(n => n.id === nodeDragStart!.node.id);
-      const updatedNode = currentNode ? { ...nodeDragStart!.node, position: currentNode.position } : nodeDragStart!.node;
-      props.onNodeDragStop?.(event, updatedNode);
-      // 通知外部节点拖拽结束
-      if (currentNode) {
-        props.onNodesChange?.([{ type: "position", id: nodeDragStart!.node.id, position: currentNode.position }]);
+      // 如果没有移动，认为是点击事件
+      if (!hasMoved) {
+        // 触发节点点击事件
+        handleNodeClick(event, nodeDragStart.node);
+      } else {
+        // 真正的拖拽结束
+        const currentNode = context.store.store.nodes.find(n => n.id === nodeDragStart!.node.id);
+        const updatedNode = currentNode ? { ...nodeDragStart!.node, position: currentNode.position } : nodeDragStart!.node;
+        props.onNodeDragStop?.(event, updatedNode);
+        // 通知外部节点拖拽结束
+        if (currentNode) {
+          props.onNodesChange?.([{ type: "position", id: nodeDragStart!.node.id, position: currentNode.position }]);
+        }
       }
       nodeDragStart = null;
     }
     isDragging = false;
+    hasMoved = false;
   };
 
   // 滚轮缩放
@@ -233,7 +261,7 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
   };
 
   // 双击缩放
-  const handleDoubleClick = (event: MouseEvent) => {
+  const handleDoubleClick = (_event: MouseEvent) => {
     if (props.zoomOnDoubleClick !== false) {
       const newZoom = Math.min(viewport().zoom * 1.5, props.maxZoom || 2);
       context.store.updateViewport({ zoom: newZoom });
@@ -274,84 +302,92 @@ function SolidFlowInner(props: SolidFlowProps & { store: ReturnType<typeof creat
     context.store.setSelectedNodes([node]);
   };
 
+  // 更新 context 以包含 handleNodeClick
+  const contextValueWithHandlers = {
+    ...context,
+    handleNodeClick,
+  };
+
   return (
-    <div
-      ref={containerRef}
-      class={`solid-flow ${props.className || ""}`}
-      style={{
-        width: "100%",
-        height: "100%",
-        position: "relative",
-        ...props.style,
-      }}
-    >
+    <SolidFlowProvider value={contextValueWithHandlers}>
       <div
-        ref={paneRef}
-        class="solid-flow__pane"
+        ref={containerRef}
+        class={`solid-flow ${props.className || ""}`}
         style={{
           width: "100%",
           height: "100%",
-          transform: `translate(${viewport().x}px, ${viewport().y}px) scale(${viewport().zoom})`,
-          transformOrigin: "0 0",
+          position: "relative",
+          ...props.style,
         }}
-        onClick={handlePaneClick}
       >
-        {/* 边 */}
-        <svg
-          class="solid-flow__edges"
+        <div
+          ref={paneRef}
+          class="solid-flow__pane"
           style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
             width: "100%",
             height: "100%",
-            pointerEvents: "none",
-            overflow: "visible",
+            transform: `translate(${viewport().x}px, ${viewport().y}px) scale(${viewport().zoom})`,
+            "transform-origin": "0 0",
           }}
+          onClick={handlePaneClick}
         >
-          <defs>
-            <marker
-              id="solid-flow__arrowclosed"
-              markerWidth="12"
-              markerHeight="12"
-              refX="6"
-              refY="6"
-              orient="auto"
-              markerUnits="strokeWidth"
-            >
-              <path d="M 0 0 L 12 6 L 0 12 z" fill="#b1b1b7" />
-            </marker>
-          </defs>
-          <For each={edges()}>
-            {(edge) => (
-              <Edge
-                edge={edge}
-                nodes={nodes()}
-                selected={
-                  edge.selected !== undefined
-                    ? edge.selected
-                    : context.store.store.selectedEdges.some((e) => e.id === edge.id)
-                }
+          {/* 边 */}
+          <svg
+            class="solid-flow__edges"
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              "pointer-events": "none",
+              overflow: "visible",
+            }}
+          >
+            <defs>
+              <marker
+                id="solid-flow__arrowclosed"
+                markerWidth="12"
+                markerHeight="12"
+                refX="6"
+                refY="6"
+                orient="auto"
+                markerUnits="strokeWidth"
+              >
+                <path d="M 0 0 L 12 6 L 0 12 z" fill="#b1b1b7" />
+              </marker>
+            </defs>
+            <For each={edges()}>
+              {(edge) => (
+                <Edge
+                  edge={edge}
+                  nodes={nodes()}
+                  selected={
+                    edge.selected !== undefined
+                      ? edge.selected
+                      : context.store.store.selectedEdges.some((e) => e.id === edge.id)
+                  }
+                />
+              )}
+            </For>
+          </svg>
+
+          {/* 节点 */}
+          <For each={nodes()}>
+            {(node) => (
+              <Node
+                node={node}
+                selected={context.store.store.selectedNodes.some((n) => n.id === node.id)}
+                dragging={node.dragging}
               />
             )}
           </For>
-        </svg>
+        </div>
 
-        {/* 节点 */}
-        <For each={nodes()}>
-          {(node) => (
-            <Node
-              node={node}
-              selected={context.store.store.selectedNodes.some((n) => n.id === node.id)}
-              dragging={node.dragging}
-            />
-          )}
-        </For>
+        {/* 子组件（Controls, MiniMap, Panel, Background 等） */}
+        {props.children}
       </div>
-
-      {/* 子组件（Controls, MiniMap, Panel, Background 等） */}
-      {props.children}
-    </div>
+    </SolidFlowProvider>
   );
 }
 

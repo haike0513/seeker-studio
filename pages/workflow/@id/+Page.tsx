@@ -198,6 +198,12 @@ export default function WorkflowDetailPage() {
     }
   };
 
+  createEffect(() => {
+    console.log("workflow", workflow());
+  });
+  createEffect(() => {
+    console.log("selectedNode", selectedNode());
+  });
   return (
     <div class="h-[calc(100vh-4rem)] flex flex-col bg-background">
       <Show
@@ -211,7 +217,7 @@ export default function WorkflowDetailPage() {
         }
       >
         {/* 顶部工具栏和标题栏 */}
-        <div class="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div class="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
           {/* 顶部工具栏 */}
           <WorkflowToolbar
             workflowId={workflowId}
@@ -285,7 +291,10 @@ export default function WorkflowDetailPage() {
                 }
               }
               showToolbar={false}
-              onNodeSelect={setSelectedNode}
+              onNodeSelect={(node) => {
+                console.log("node", node);
+                setSelectedNode(node);
+              }}
               selectedNode={selectedNode()}
             />
           </div>
