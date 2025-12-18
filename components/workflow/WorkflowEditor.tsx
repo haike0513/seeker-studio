@@ -19,6 +19,10 @@ import { WorkflowExecutionButton } from "./WorkflowExecutionButton";
 import { getWorkflowNodeDefinition } from "./nodeRegistry";
 import { createWorkflowEditorStore } from "./workflowEditorStore";
 import { WorkflowNode as WorkflowNodeComponent } from "./WorkflowNode";
+import { WorkflowHistoryManager } from "./WorkflowHistoryManager";
+import { WorkflowClipboard } from "./WorkflowClipboard";
+import { validateWorkflow } from "./WorkflowValidator";
+import { WorkflowValidationPanel } from "./WorkflowValidationPanel";
 
 interface WorkflowEditorProps {
   workflowId?: string;
@@ -48,7 +52,38 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
   });
   const [saving, setSaving] = createSignal(false);
   const [selectedEdgeId, setSelectedEdgeId] = createSignal<string | null>(null);
+  const [selectedNodeIds, setSelectedNodeIds] = createSignal<string[]>([]);
+  const [validationResult, setValidationResult] = createSignal<ReturnType<typeof validateWorkflow> | null>(null);
   let canvasRef: HTMLDivElement | undefined;
+  
+  // 历史记录管理器
+  const historyManager = new WorkflowHistoryManager();
+  
+  // 剪贴板管理器
+  const clipboard = new WorkflowClipboard();
+  
+  // 初始化历史记录
+  createEffect(() => {
+    if (nodes().length > 0 || edges().length > 0) {
+      historyManager.reset({
+        nodes: nodes(),
+        edges: edges(),
+      });
+    }
+  });
+  
+  // 工作流验证
+  createEffect(() => {
+    const result = validateWorkflow(nodes(), edges());
+    setValidationResult(result);
+    
+    if (result.errors.length > 0) {
+      console.warn("工作流验证错误:", result.errors);
+    }
+    if (result.warnings.length > 0) {
+      console.info("工作流验证警告:", result.warnings);
+    }
+  });
 
   // 处理键盘操作
   const handleKeyDown = (event: KeyboardEvent) => {
@@ -59,20 +94,163 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
       return;
     }
 
-    // 如果按下Delete键且选中了连线，则删除连线
-    if ((event.key === "Delete" || event.key === "Backspace") && selectedEdgeId()) {
+    // Ctrl+Z 或 Cmd+Z 撤销
+    if ((event.ctrlKey || event.metaKey) && event.key === "z" && !event.shiftKey) {
       event.preventDefault();
-      const edgeId = selectedEdgeId();
-      if (edgeId) {
-        setEdges((prev) => prev.filter((e) => e.id !== edgeId));
-        // 从初始工作流中删除
+      const state = historyManager.undo();
+      if (state) {
+        setNodes(() => state.nodes);
+        setEdges(() => state.edges);
+        toast.success("已撤销");
+      }
+      return;
+    }
+
+    // Ctrl+Shift+Z 或 Cmd+Shift+Z 重做
+    if ((event.ctrlKey || event.metaKey) && event.key === "z" && event.shiftKey) {
+      event.preventDefault();
+      const state = historyManager.redo();
+      if (state) {
+        setNodes(() => state.nodes);
+        setEdges(() => state.edges);
+        toast.success("已重做");
+      }
+      return;
+    }
+
+    // Ctrl+C 或 Cmd+C 复制
+    if ((event.ctrlKey || event.metaKey) && event.key === "c") {
+      event.preventDefault();
+      const selectedIds = selectedNodeIds().length > 0 
+        ? selectedNodeIds() 
+        : selectedNode() 
+          ? [selectedNode()!.id] 
+          : [];
+      
+      if (selectedIds.length > 0) {
+        const fullNodes = props.initialWorkflow?.nodes || [];
+        if (clipboard.copy(nodes(), edges(), selectedIds, fullNodes)) {
+          toast.success(`已复制 ${selectedIds.length} 个节点`);
+        }
+      }
+      return;
+    }
+
+    // Ctrl+V 或 Cmd+V 粘贴
+    if ((event.ctrlKey || event.metaKey) && event.key === "v") {
+      event.preventDefault();
+      const pasteData = clipboard.paste();
+      if (pasteData) {
+        // 添加新节点
+        setNodes((prev) => [
+          ...prev,
+          ...pasteData.nodes.map((n) => ({
+            id: n.id,
+            type: n.type,
+            data: { ...n.data, title: n.title },
+            position: n.position,
+          })),
+        ]);
+        
+        // 添加新边
+        setEdges((prev) => [
+          ...prev,
+          ...pasteData.edges.map((e) => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            sourceHandle: e.sourceHandle || null,
+            targetHandle: e.targetHandle || null,
+          })),
+        ]);
+        
+        // 更新初始工作流
         if (props.initialWorkflow) {
+          props.initialWorkflow.nodes = [...props.initialWorkflow.nodes, ...pasteData.nodes];
+          props.initialWorkflow.edges = [...(props.initialWorkflow.edges || []), ...pasteData.edges];
+        }
+        
+        // 选中新粘贴的节点
+        setSelectedNodeIds(pasteData.nodes.map((n) => n.id));
+        if (pasteData.nodes.length > 0) {
+          setSelectedNode(pasteData.nodes[0]);
+        }
+        
+        // 保存到历史记录
+        historyManager.push({
+          nodes: nodes(),
+          edges: edges(),
+        });
+        
+        toast.success(`已粘贴 ${pasteData.nodes.length} 个节点`);
+      }
+      return;
+    }
+
+    // Ctrl+A 或 Cmd+A 全选
+    if ((event.ctrlKey || event.metaKey) && event.key === "a") {
+      event.preventDefault();
+      setSelectedNodeIds(nodes().map((n) => n.id));
+      toast.info(`已选中 ${nodes().length} 个节点`);
+      return;
+    }
+
+    // Delete 或 Backspace 删除
+    if (event.key === "Delete" || event.key === "Backspace") {
+      // 删除选中的节点
+      if (selectedNodeIds().length > 0) {
+        event.preventDefault();
+        const idsToDelete = selectedNodeIds();
+        setNodes((prev) => prev.filter((n) => !idsToDelete.includes(n.id)));
+        setEdges((prev) =>
+          prev.filter(
+            (e) => !idsToDelete.includes(e.source) && !idsToDelete.includes(e.target)
+          )
+        );
+        
+        if (props.initialWorkflow) {
+          props.initialWorkflow.nodes = props.initialWorkflow.nodes.filter(
+            (n) => !idsToDelete.includes(n.id)
+          );
           props.initialWorkflow.edges = (props.initialWorkflow.edges || []).filter(
-            (e) => e.id !== edgeId
+            (e) => !idsToDelete.includes(e.source) && !idsToDelete.includes(e.target)
           );
         }
-        setSelectedEdgeId(null);
-        toast.success("连线已删除");
+        
+        setSelectedNodeIds([]);
+        setSelectedNode(null);
+        
+        // 保存到历史记录
+        historyManager.push({
+          nodes: nodes(),
+          edges: edges(),
+        });
+        
+        toast.success(`已删除 ${idsToDelete.length} 个节点`);
+        return;
+      }
+      
+      // 删除选中的连线
+      if (selectedEdgeId()) {
+        event.preventDefault();
+        const edgeId = selectedEdgeId();
+        if (edgeId) {
+          setEdges((prev) => prev.filter((e) => e.id !== edgeId));
+          if (props.initialWorkflow) {
+            props.initialWorkflow.edges = (props.initialWorkflow.edges || []).filter(
+              (e) => e.id !== edgeId
+            );
+          }
+          setSelectedEdgeId(null);
+          
+          // 保存到历史记录
+          historyManager.push({
+            nodes: nodes(),
+            edges: edges(),
+          });
+          
+          toast.success("连线已删除");
+        }
       }
     }
   };
@@ -85,11 +263,27 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
     window.removeEventListener("keydown", handleKeyDown);
   });
 
-  const handleNodeClick = (nodeId: string) => {
+  const handleNodeClick = (nodeId: string, event?: MouseEvent) => {
     console.log("handleNodeClick", nodeId);
     const node = nodes().find((n) => n.id === nodeId);
     if (!node) {
       props.onNodeSelect?.(null);
+      return;
+    }
+
+    // 处理多选（Shift+点击）
+    if (event?.shiftKey) {
+      const currentSelected = selectedNodeIds();
+      if (currentSelected.includes(nodeId)) {
+        // 取消选择
+        setSelectedNodeIds(currentSelected.filter((id) => id !== nodeId));
+        if (selectedNode()?.id === nodeId) {
+          setSelectedNode(null);
+        }
+      } else {
+        // 添加到选择
+        setSelectedNodeIds([...currentSelected, nodeId]);
+      }
       return;
     }
 
@@ -130,6 +324,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
       }
 
       setSelectedNode(fullNode);
+      setSelectedNodeIds([nodeId]);
       setShowConfigPanel(true);
       // 通知外部组件节点已选中
       props.onNodeSelect?.(fullNode);
@@ -186,11 +381,18 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
 
     // 默认选中新创建的节点并打开配置面板，提升编辑体验
     setSelectedNode(newNode);
+    setSelectedNodeIds([newNode.id]);
     setShowConfigPanel(true);
     // 通知外部组件节点已创建并选中
     props.onNodeSelect?.(newNode);
     // 如果外部提供了添加节点的回调，也调用它
     props.onAddNode?.(nodeType, position);
+    
+    // 保存到历史记录
+    historyManager.push({
+      nodes: nodes(),
+      edges: edges(),
+    });
   };
   
   // 监听外部selectedNode变化，同步内部状态
@@ -260,6 +462,12 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
       },
     ]);
 
+    // 保存到历史记录
+    historyManager.push({
+      nodes: nodes(),
+      edges: edges(),
+    });
+
     toast.success("连接已创建");
   };
 
@@ -272,6 +480,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
   const handlePaneClick = () => {
     // 点击画布空白处，取消选中节点和连线
     setSelectedNode(null);
+    setSelectedNodeIds([]);
     setShowConfigPanel(false);
     setSelectedEdgeId(null);
     props.onNodeSelect?.(null);
@@ -425,6 +634,9 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
 
       {/* 主编辑区域 */}
       <div class="flex-1 relative min-h-0">
+        {/* 验证面板 */}
+        <WorkflowValidationPanel validationResult={validationResult()} />
+        
         <div
           ref={canvasRef}
           class="h-full w-full"
@@ -479,7 +691,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
             }}
             onNodeClick={(event, node) => {
               setSelectedEdgeId(null); // 点击节点时取消选中连线
-              handleNodeClick(node.id);
+              handleNodeClick(node.id, event);
             }}
             onNodeDrag={(event, node) => {
               // 当节点拖拽时，同步更新 nodes signal
@@ -509,6 +721,12 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
                     node.position as { x: number; y: number };
                 }
               }
+              
+              // 保存到历史记录
+              historyManager.push({
+                nodes: nodes(),
+                edges: edges(),
+              });
             }}
             onConnect={handleConnect}
             onEdgeClick={handleEdgeClick}
