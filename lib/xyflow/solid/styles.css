@@ -1,0 +1,241 @@
+/**
+ * xyflow SolidJS 版本样式
+ * 基于 @xyflow/react 的样式系统
+ */
+
+.solid-flow {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.solid-flow__pane {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.solid-flow__pane:active {
+  cursor: grabbing;
+}
+
+/* 节点样式 */
+.solid-flow__node {
+  position: absolute;
+  cursor: move;
+  pointer-events: all;
+}
+
+.solid-flow__node-default {
+  padding: 10px;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid #b1b1b7;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.solid-flow__node-default-label {
+  font-size: 12px;
+  color: #333;
+}
+
+.solid-flow__node-selected {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.solid-flow__node-dragging {
+  opacity: 0.8;
+}
+
+/* 连接点样式 */
+.solid-flow__handle {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #b1b1b7;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  cursor: crosshair;
+  z-index: 10;
+}
+
+.solid-flow__handle-top {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.solid-flow__handle-right {
+  right: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.solid-flow__handle-bottom {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.solid-flow__handle-left {
+  left: -4px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.solid-flow__handle-connectable {
+  cursor: crosshair;
+}
+
+.solid-flow__handle-connectable:hover {
+  background: #007bff;
+  transform: scale(1.2);
+}
+
+.solid-flow__handle-connecting {
+  background: #007bff;
+}
+
+/* 边样式 */
+.solid-flow__edge {
+  pointer-events: none;
+}
+
+.solid-flow__edge-path {
+  fill: none;
+  stroke-width: 2;
+  stroke: #b1b1b7;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.solid-flow__edge-path:hover {
+  stroke: #007bff;
+  stroke-width: 3;
+}
+
+.solid-flow__edge-selected .solid-flow__edge-path {
+  stroke: #007bff;
+  stroke-width: 3;
+}
+
+.solid-flow__edge-animated .solid-flow__edge-path {
+  stroke-dasharray: 5;
+  animation: dashdraw 0.5s linear infinite;
+}
+
+@keyframes dashdraw {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+.solid-flow__edge-text {
+  font-size: 10px;
+  fill: #333;
+  pointer-events: all;
+  cursor: pointer;
+}
+
+/* 背景样式 */
+.solid-flow__background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.solid-flow__background-svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 控制按钮样式 */
+.solid-flow__controls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.solid-flow__controls-button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #b1b1b7;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.solid-flow__controls-button:hover {
+  background: #f5f5f5;
+  border-color: #007bff;
+  color: #007bff;
+}
+
+.solid-flow__controls-button:active {
+  background: #e9ecef;
+}
+
+/* 小地图样式 */
+.solid-flow__minimap {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #b1b1b7;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 面板样式 */
+.solid-flow__panel {
+  position: absolute;
+  z-index: 100;
+}
+
+.solid-flow__panel-top-left {
+  top: 10px;
+  left: 10px;
+}
+
+.solid-flow__panel-top-center {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.solid-flow__panel-top-right {
+  top: 10px;
+  right: 10px;
+}
+
+.solid-flow__panel-bottom-left {
+  bottom: 10px;
+  left: 10px;
+}
+
+.solid-flow__panel-bottom-center {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.solid-flow__panel-bottom-right {
+  bottom: 10px;
+  right: 10px;
+}
+

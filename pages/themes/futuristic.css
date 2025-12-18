@@ -1,0 +1,97 @@
+/* Futuristic / Sci-Fi 主题 */
+[data-theme="futuristic"] {
+  --radius: 0.75rem;
+  --background: oklch(0.1 0.05 250);
+  --foreground: oklch(0.95 0.05 180);
+  --card: oklch(0.15 0.05 250);
+  --card-foreground: oklch(0.95 0.05 180);
+  --popover: oklch(0.15 0.05 250);
+  --popover-foreground: oklch(0.95 0.05 180);
+  --primary: oklch(0.7 0.25 180);
+  --primary-foreground: oklch(0.1 0.05 250);
+  --secondary: oklch(0.2 0.08 250);
+  --secondary-foreground: oklch(0.95 0.05 180);
+  --muted: oklch(0.18 0.05 250);
+  --muted-foreground: oklch(0.7 0.05 180);
+  --accent: oklch(0.6 0.2 200);
+  --accent-foreground: oklch(0.95 0.05 180);
+  --destructive: oklch(0.65 0.25 10);
+  --border: oklch(0.5 0.2 180 / 0.3);
+  --input: oklch(0.2 0.05 250);
+  --ring: oklch(0.7 0.25 180);
+  --sidebar: oklch(0.12 0.05 250);
+  --sidebar-foreground: oklch(0.95 0.05 180);
+  --sidebar-primary: oklch(0.7 0.25 180);
+  --sidebar-primary-foreground: oklch(0.1 0.05 250);
+  --sidebar-accent: oklch(0.2 0.08 250);
+  --sidebar-accent-foreground: oklch(0.95 0.05 180);
+  --sidebar-border: oklch(0.5 0.2 180 / 0.3);
+  --sidebar-ring: oklch(0.7 0.25 180);
+}
+
+[data-theme="futuristic"] body {
+  background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+  min-height: 100vh;
+  position: relative;
+}
+
+[data-theme="futuristic"] body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 50%, oklch(0.5 0.2 180 / 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, oklch(0.5 0.2 200 / 0.1) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="futuristic"] [class*="card"],
+[data-theme="futuristic"] [class*="popover"],
+[data-theme="futuristic"] [class*="sidebar"] {
+  background: oklch(0.15 0.05 250);
+  border: 1px solid oklch(0.5 0.2 180 / 0.4);
+  box-shadow: 
+    0 0 20px oklch(0.5 0.2 180 / 0.2),
+    inset 0 0 20px oklch(0.5 0.2 180 / 0.05);
+}
+
+[data-theme="futuristic"] [class*="button"]:not([class*="ghost"]) {
+  background: linear-gradient(135deg, oklch(0.6 0.2 180), oklch(0.7 0.25 200));
+  border: 1px solid oklch(0.7 0.25 180);
+  box-shadow: 
+    0 0 10px oklch(0.7 0.25 180 / 0.5),
+    inset 0 0 10px oklch(0.8 0.25 180 / 0.2);
+  color: oklch(0.1 0.05 250);
+}
+
+[data-theme="futuristic"] [class*="button"]:not([class*="ghost"]):hover {
+  box-shadow: 
+    0 0 20px oklch(0.7 0.25 180 / 0.8),
+    inset 0 0 15px oklch(0.8 0.25 180 / 0.3);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+[data-theme="futuristic"] [class*="input"],
+[data-theme="futuristic"] [class*="text-field"] {
+  background: oklch(0.12 0.05 250);
+  border: 1px solid oklch(0.5 0.2 180 / 0.4);
+  box-shadow: inset 0 0 10px oklch(0.5 0.2 180 / 0.1);
+}
+
+[data-theme="futuristic"] [class*="input"]:focus,
+[data-theme="futuristic"] [class*="text-field"]:focus {
+  border-color: oklch(0.7 0.25 180);
+  box-shadow: 
+    inset 0 0 10px oklch(0.5 0.2 180 / 0.1),
+    0 0 10px oklch(0.7 0.25 180 / 0.3);
+}
+
+[data-theme="futuristic"] * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+

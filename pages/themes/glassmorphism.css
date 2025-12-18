@@ -1,0 +1,45 @@
+/* Glassmorphism（毛玻璃）主题 */
+[data-theme="glassmorphism"] {
+  --radius: 1rem;
+  --background: rgba(255, 255, 255, 0.05);
+  --foreground: oklch(0.15 0.02 250);
+  --card: rgba(255, 255, 255, 0.25);
+  --card-foreground: oklch(0.15 0.02 250);
+  --popover: rgba(255, 255, 255, 0.3);
+  --popover-foreground: oklch(0.15 0.02 250);
+  --primary: oklch(0.6 0.15 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: rgba(255, 255, 255, 0.2);
+  --secondary-foreground: oklch(0.15 0.02 250);
+  --muted: rgba(255, 255, 255, 0.15);
+  --muted-foreground: oklch(0.5 0.02 250);
+  --accent: rgba(255, 255, 255, 0.2);
+  --accent-foreground: oklch(0.15 0.02 250);
+  --destructive: oklch(0.6 0.2 20);
+  --border: rgba(255, 255, 255, 0.3);
+  --input: rgba(255, 255, 255, 0.2);
+  --ring: oklch(0.6 0.15 250);
+  --sidebar: rgba(255, 255, 255, 0.2);
+  --sidebar-foreground: oklch(0.15 0.02 250);
+  --sidebar-primary: oklch(0.6 0.15 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: rgba(255, 255, 255, 0.15);
+  --sidebar-accent-foreground: oklch(0.15 0.02 250);
+  --sidebar-border: rgba(255, 255, 255, 0.3);
+  --sidebar-ring: oklch(0.6 0.15 250);
+}
+
+[data-theme="glassmorphism"] body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+[data-theme="glassmorphism"] [class*="card"],
+[data-theme="glassmorphism"] [class*="popover"],
+[data-theme="glassmorphism"] [class*="sidebar"] {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+}
+

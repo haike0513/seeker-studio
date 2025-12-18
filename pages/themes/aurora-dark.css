@@ -1,0 +1,144 @@
+/* Aurora Dark（极光深色模式）主题 */
+[data-theme="aurora-dark"] {
+  --radius: 1rem;
+  --background: oklch(0.08 0.02 260);
+  --foreground: oklch(0.95 0.01 180);
+  --card: oklch(0.12 0.02 260);
+  --card-foreground: oklch(0.95 0.01 180);
+  --popover: oklch(0.12 0.02 260);
+  --popover-foreground: oklch(0.95 0.01 180);
+  --primary: oklch(0.7 0.25 180);
+  --primary-foreground: oklch(0.08 0.02 260);
+  --secondary: oklch(0.15 0.03 260);
+  --secondary-foreground: oklch(0.95 0.01 180);
+  --muted: oklch(0.14 0.02 260);
+  --muted-foreground: oklch(0.65 0.02 180);
+  --accent: oklch(0.6 0.2 200);
+  --accent-foreground: oklch(0.95 0.01 180);
+  --destructive: oklch(0.65 0.25 10);
+  --border: oklch(0.5 0.25 200 / 0.2);
+  --input: oklch(0.12 0.02 260);
+  --ring: oklch(0.7 0.25 180);
+  --sidebar: oklch(0.1 0.02 260);
+  --sidebar-foreground: oklch(0.95 0.01 180);
+  --sidebar-primary: oklch(0.7 0.25 180);
+  --sidebar-primary-foreground: oklch(0.08 0.02 260);
+  --sidebar-accent: oklch(0.15 0.03 260);
+  --sidebar-accent-foreground: oklch(0.95 0.01 180);
+  --sidebar-border: oklch(0.5 0.25 200 / 0.2);
+  --sidebar-ring: oklch(0.7 0.25 180);
+}
+
+[data-theme="aurora-dark"] body {
+  background: #0a0e27;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+[data-theme="aurora-dark"] body::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: 
+    radial-gradient(ellipse at 20% 50%, oklch(0.5 0.3 220 / 0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, oklch(0.5 0.3 280 / 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, oklch(0.5 0.3 180 / 0.2) 0%, transparent 50%);
+  animation: aurora 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes aurora {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(-5%, -5%) rotate(5deg);
+  }
+  50% {
+    transform: translate(5%, 5%) rotate(-5deg);
+  }
+  75% {
+    transform: translate(-3%, 3%) rotate(3deg);
+  }
+}
+
+
+[data-theme="aurora-dark"] [class*="card"],
+[data-theme="aurora-dark"] [class*="popover"],
+[data-theme="aurora-dark"] [class*="sidebar"] {
+  background: oklch(0.12 0.02 260 / 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid oklch(0.5 0.25 200 / 0.3);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 1px oklch(0.5 0.25 200 / 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+[data-theme="aurora-dark"] [class*="card"]::before,
+[data-theme="aurora-dark"] [class*="popover"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    oklch(0.6 0.3 220 / 0.6),
+    oklch(0.6 0.3 280 / 0.6),
+    transparent
+  );
+  opacity: 0.8;
+}
+
+[data-theme="aurora-dark"] [class*="button"]:not([class*="ghost"]) {
+  background: linear-gradient(135deg, 
+    oklch(0.6 0.25 200),
+    oklch(0.65 0.25 220)
+  );
+  border: 1px solid oklch(0.7 0.25 200);
+  box-shadow: 
+    0 4px 12px oklch(0.6 0.25 200 / 0.4),
+    0 0 8px oklch(0.6 0.25 200 / 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  color: oklch(0.08 0.02 260);
+}
+
+[data-theme="aurora-dark"] [class*="button"]:not([class*="ghost"]):hover {
+  box-shadow: 
+    0 6px 16px oklch(0.6 0.25 200 / 0.6),
+    0 0 12px oklch(0.6 0.25 200 / 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+[data-theme="aurora-dark"] [class*="input"],
+[data-theme="aurora-dark"] [class*="text-field"] {
+  background: oklch(0.1 0.02 260 / 0.8);
+  border: 1px solid oklch(0.5 0.25 200 / 0.3);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 1px oklch(0.5 0.25 200 / 0.2);
+}
+
+[data-theme="aurora-dark"] [class*="input"]:focus,
+[data-theme="aurora-dark"] [class*="text-field"]:focus {
+  border-color: oklch(0.7 0.25 200);
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.3),
+    0 0 8px oklch(0.7 0.25 200 / 0.4),
+    0 0 1px oklch(0.7 0.25 200 / 0.6);
+}
+
+[data-theme="aurora-dark"] * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+

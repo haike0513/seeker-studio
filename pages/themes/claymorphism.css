@@ -1,0 +1,81 @@
+/* Claymorphism（软泥风格）主题 */
+[data-theme="claymorphism"] {
+  --radius: 1.5rem;
+  --background: oklch(0.95 0.01 240);
+  --foreground: oklch(0.2 0.02 250);
+  --card: rgba(255, 255, 255, 0.7);
+  --card-foreground: oklch(0.2 0.02 250);
+  --popover: rgba(255, 255, 255, 0.75);
+  --popover-foreground: oklch(0.2 0.02 250);
+  --primary: oklch(0.55 0.18 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: rgba(255, 255, 255, 0.6);
+  --secondary-foreground: oklch(0.2 0.02 250);
+  --muted: rgba(255, 255, 255, 0.5);
+  --muted-foreground: oklch(0.5 0.02 250);
+  --accent: rgba(255, 255, 255, 0.65);
+  --accent-foreground: oklch(0.2 0.02 250);
+  --destructive: oklch(0.6 0.22 20);
+  --border: rgba(255, 255, 255, 0.8);
+  --input: rgba(255, 255, 255, 0.7);
+  --ring: oklch(0.55 0.18 250);
+  --sidebar: rgba(255, 255, 255, 0.65);
+  --sidebar-foreground: oklch(0.2 0.02 250);
+  --sidebar-primary: oklch(0.55 0.18 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: rgba(255, 255, 255, 0.55);
+  --sidebar-accent-foreground: oklch(0.2 0.02 250);
+  --sidebar-border: rgba(255, 255, 255, 0.8);
+  --sidebar-ring: oklch(0.55 0.18 250);
+}
+
+[data-theme="claymorphism"] body {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 50%, #fff3e0 100%);
+  min-height: 100vh;
+}
+
+[data-theme="claymorphism"] [class*="card"],
+[data-theme="claymorphism"] [class*="popover"],
+[data-theme="claymorphism"] [class*="sidebar"] {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    8px 8px 16px rgba(163, 177, 198, 0.4),
+    -8px -8px 16px rgba(255, 255, 255, 0.8),
+    inset -2px -2px 4px rgba(163, 177, 198, 0.1);
+}
+
+[data-theme="claymorphism"] [class*="card"]:active,
+[data-theme="claymorphism"] [class*="popover"]:active {
+  box-shadow: 
+    inset 4px 4px 8px rgba(163, 177, 198, 0.4),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="claymorphism"] [class*="button"]:not([class*="ghost"]) {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 
+    6px 6px 12px rgba(163, 177, 198, 0.4),
+    -6px -6px 12px rgba(255, 255, 255, 0.8);
+  color: oklch(0.55 0.18 250);
+}
+
+[data-theme="claymorphism"] [class*="button"]:not([class*="ghost"]):hover {
+  box-shadow: 
+    4px 4px 8px rgba(163, 177, 198, 0.4),
+    -4px -4px 8px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="claymorphism"] [class*="button"]:not([class*="ghost"]):active {
+  box-shadow: 
+    inset 3px 3px 6px rgba(163, 177, 198, 0.4),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="claymorphism"] * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
