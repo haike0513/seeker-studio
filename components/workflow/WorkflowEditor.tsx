@@ -50,8 +50,15 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
   const [selectedEdgeId, setSelectedEdgeId] = createSignal<string | null>(null);
   let canvasRef: HTMLDivElement | undefined;
 
-  // 处理键盘删除操作
+  // 处理键盘操作
   const handleKeyDown = (event: KeyboardEvent) => {
+    // Ctrl+S 或 Cmd+S 保存
+    if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+      event.preventDefault();
+      handleSave();
+      return;
+    }
+
     // 如果按下Delete键且选中了连线，则删除连线
     if ((event.key === "Delete" || event.key === "Backspace") && selectedEdgeId()) {
       event.preventDefault();
@@ -271,6 +278,8 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
   };
 
   const handleSave = async () => {
+    if (saving()) return;
+    
     setSaving(true);
     try {
       const workflowData = {
@@ -301,7 +310,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
       };
 
       if (props.workflowId) {
-        // 更新工作流
+        // 更新现有工作流
         const response = await fetch(`/api/workflows/${props.workflowId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -325,7 +334,47 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
         });
 
         if (!response.ok) {
-          throw new Error("保存失败");
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "保存失败");
+        }
+      } else {
+        // 创建新工作流
+        const response = await fetch("/api/workflows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            name: props.initialWorkflow?.name || "新建工作流",
+            description: props.initialWorkflow?.description || "",
+            nodes: workflowData.nodes.map((n) => ({
+              type: n.type,
+              title: n.title,
+              position: n.position,
+              config: n.config,
+              data: n.data,
+            })),
+            edges: workflowData.edges.map((e) => ({
+              source: e.source,
+              target: e.target,
+              sourceHandle: e.sourceHandle,
+              targetHandle: e.targetHandle,
+              config: e.config,
+            })),
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "创建工作流失败");
+        }
+
+        const result = await response.json();
+        if (result.success && result.data?.id) {
+          // 通知父组件工作流已创建
+          props.onSave?.(workflowData);
+          toast.success("工作流创建成功！");
+          // 可以在这里触发页面跳转到新创建的工作流
+          return;
         }
       }
 
@@ -333,7 +382,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
       toast.success("工作流保存成功！");
     } catch (error) {
       console.error("Save error:", error);
-      toast.error("保存失败");
+      toast.error(error instanceof Error ? error.message : "保存失败");
     } finally {
       setSaving(false);
     }
@@ -363,8 +412,12 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
             <Show when={props.workflowId}>
               <WorkflowExecutionButton workflowId={props.workflowId!} />
             </Show>
-            <Button onClick={handleSave} disabled={saving()}>
-              {saving() ? "保存中..." : "保存"}
+            <Button 
+              onClick={handleSave} 
+              disabled={saving()}
+              class="min-w-[80px]"
+            >
+              {saving() ? "保存中..." : props.workflowId ? "保存" : "创建"}
             </Button>
           </div>
         </div>

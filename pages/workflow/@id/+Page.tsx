@@ -296,6 +296,10 @@ export default function WorkflowDetailPage() {
                 setSelectedNode(node);
               }}
               selectedNode={selectedNode()}
+              onSave={async (workflowData) => {
+                // 保存工作流数据后刷新
+                refetch();
+              }}
             />
           </div>
 
