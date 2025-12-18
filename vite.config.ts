@@ -4,7 +4,7 @@ import { sentryVitePlugin } from "@sentry/vite-plugin";
 import vike from "vike/plugin";
 import { defineConfig } from "vite";
 import { fileURLToPath } from "url";
-
+import { telefunc } from "telefunc/vite";
 export default defineConfig({
   ssr: {
     // Add problematic npm package here:
@@ -19,6 +19,7 @@ export default defineConfig({
     }),
     vikeSolid(),
     tailwindcss(),
+    telefunc(),
   ],
   resolve: {
     alias: {
@@ -33,6 +34,6 @@ export default defineConfig({
   },
 
   build: {
-    sourcemap: true,
+    sourcemap: false,
   },
 });
