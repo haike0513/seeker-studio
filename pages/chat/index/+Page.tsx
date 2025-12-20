@@ -1,4 +1,5 @@
 import { createSignal, For } from "solid-js";
+import { navigate } from "vike/client/router";
 import { Button } from "@/registry/ui/button";
 import {
   AlertDialog,
@@ -84,7 +85,7 @@ export default function Page() {
       });
 
       // 跳转到会话页面（不再通过 URL 携带消息）
-      window.location.href = `/chat/${chatId}`;
+      navigate(`/chat/${chatId}`);
     } catch (error) {
       console.error("Error creating chat session:", error);
       setErrorMessage("创建会话失败，请重试");

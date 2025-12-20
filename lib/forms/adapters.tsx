@@ -157,3 +157,160 @@ export function FormInput<
   );
 }
 
+/**
+ * 原生 HTML input 元素适配器 Props
+ * 适用于需要完全自定义样式的场景（如聊天输入框）
+ */
+export interface FormNativeInputProps<
+  T extends FieldValues,
+  TFieldName extends FieldPath<T>,
+> {
+  of: FormStore<T, undefined>;
+  name: TFieldName;
+  placeholder?: string;
+  type?: "text" | "email" | "password" | "number" | "tel" | "url" | "search";
+  disabled?: boolean;
+  autocomplete?: string;
+  class?: string;
+  /** 原生 input 元素的额外属性 */
+  inputProps?: Omit<
+    JSX.InputHTMLAttributes<HTMLInputElement>,
+    | "value"
+    | "onInput"
+    | "onChange"
+    | "type"
+    | "placeholder"
+    | "disabled"
+    | "autocomplete"
+    | "aria-invalid"
+    | "class"
+  >;
+}
+
+/**
+ * 原生 HTML input 元素适配器
+ * 适用于需要完全自定义样式和布局的场景
+ */
+export function FormNativeInput<
+  T extends FieldValues,
+  TFieldName extends FieldPath<T>,
+>(props: FormNativeInputProps<T, TFieldName>) {
+  return (
+    <Field of={props.of} name={props.name}>
+      {(field) => {
+        const error = () => field.error;
+
+        return (
+          <input
+            {...field.props}
+            value={(field.value as string) ?? ""}
+            type={props.type ?? "text"}
+            placeholder={props.placeholder}
+            disabled={props.disabled}
+            autocomplete={props.autocomplete}
+            aria-invalid={!!error()}
+            class={props.class}
+            {...props.inputProps}
+          />
+        );
+      }}
+    </Field>
+  );
+}
+
+/**
+ * Textarea 元素适配器 Props
+ */
+export interface FormTextareaProps<
+  T extends FieldValues,
+  TFieldName extends FieldPath<T>,
+> {
+  of: FormStore<T, undefined>;
+  name: TFieldName;
+  placeholder?: string;
+  disabled?: boolean;
+  rows?: number;
+  class?: string;
+  /** Textarea 的额外属性 */
+  textareaProps?: Omit<
+    JSX.TextareaHTMLAttributes<HTMLTextAreaElement>,
+    | "value"
+    | "onInput"
+    | "onChange"
+    | "placeholder"
+    | "disabled"
+    | "aria-invalid"
+    | "class"
+    | "rows"
+  >;
+}
+
+/**
+ * Textarea 元素适配器
+ * 适用于多行文本输入场景
+ */
+export function FormTextarea<
+  T extends FieldValues,
+  TFieldName extends FieldPath<T>,
+>(props: FormTextareaProps<T, TFieldName>) {
+  return (
+    <Field of={props.of} name={props.name}>
+      {(field) => {
+        const error = () => field.error;
+
+        return (
+          <textarea
+            {...field.props}
+            value={(field.value as string) ?? ""}
+            placeholder={props.placeholder}
+            disabled={props.disabled}
+            rows={props.rows}
+            aria-invalid={!!error()}
+            class={props.class}
+            {...props.textareaProps}
+          />
+        );
+      }}
+    </Field>
+  );
+}
+
+/**
+ * 表单错误显示组件 Props
+ */
+export interface FormErrorProps<
+  T extends FieldValues,
+  TFieldName extends FieldPath<T>,
+> {
+  of: FormStore<T, undefined>;
+  name: TFieldName;
+  class?: string;
+}
+
+/**
+ * 表单错误显示组件
+ * 独立显示字段错误信息，适用于自定义布局场景
+ */
+export function FormError<
+  T extends FieldValues,
+  TFieldName extends FieldPath<T>,
+>(props: FormErrorProps<T, TFieldName>) {
+  return (
+    <Field of={props.of} name={props.name}>
+      {(field) => {
+        const error = () => field.error;
+
+        return (
+          <Show when={error()}>
+            {(err) => (
+              <span class={`text-destructive text-sm ${props.class ?? ""}`}>
+                {err()}
+              </span>
+            )}
+          </Show>
+        );
+      }}
+    </Field>
+  );
+}
+

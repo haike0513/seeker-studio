@@ -114,3 +114,43 @@ export function isFormSubmitting<T extends FieldValues>(
   return form.submitting;
 }
 
+/**
+ * 检查表单是否可以提交
+ * 表单必须有效且不在提交状态
+ * @param form 表单 store
+ * @returns 是否可以提交
+ */
+export function canSubmitForm<T extends FieldValues>(
+  form: FormStore<T, undefined>,
+): boolean {
+  return !form.invalid && !form.submitting;
+}
+
+/**
+ * 获取表单提交按钮的禁用状态
+ * 当表单无效或正在提交时禁用
+ * @param form 表单 store
+ * @returns 是否禁用
+ */
+export function getSubmitButtonDisabled<T extends FieldValues>(
+  form: FormStore<T, undefined>,
+): boolean {
+  return form.invalid || form.submitting;
+}
+
+/**
+ * 获取表单提交按钮的文本
+ * 根据提交状态返回不同的文本
+ * @param form 表单 store
+ * @param defaultText 默认文本
+ * @param submittingText 提交中的文本
+ * @returns 按钮文本
+ */
+export function getSubmitButtonText<T extends FieldValues>(
+  form: FormStore<T, undefined>,
+  defaultText: string = "提交",
+  submittingText: string = "提交中...",
+): string {
+  return form.submitting ? submittingText : defaultText;
+}
+
