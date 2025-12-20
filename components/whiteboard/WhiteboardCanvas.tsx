@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, For, Show } from "solid-js";
+import { createSignal, onMount, onCleanup, For, Show, createMemo } from "solid-js";
 import {
   elements,
   tool,
@@ -35,8 +35,9 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
     
     const vb = viewBox();
-    const scaleX = vb.width / rect.width;
-    const scaleY = vb.height / rect.height;
+    // 确保除数不为零，避免 NaN
+    const scaleX = rect.width > 0 ? vb.width / rect.width : 1;
+    const scaleY = rect.height > 0 ? vb.height / rect.height : 1;
     
     return {
       x: (clientX - rect.left) * scaleX,
@@ -234,28 +235,31 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
                   stroke-width="2"
                   stroke-dasharray="5,5"
                 />
-                {[
-                  [element.x, element.y],
-                  [element.x + element.width, element.y],
-                  [element.x + element.width, element.y + element.height],
-                  [element.x, element.y + element.height],
-                ].map(([x, y], i) => (
-                  <circle
-                    key={i}
-                    cx={x}
-                    cy={y}
-                    r="4"
-                    fill="#3b82f6"
-                    stroke="white"
-                    stroke-width="1"
-                  />
-                ))}
+                <For
+                  each={[
+                    [element.x, element.y],
+                    [element.x + element.width, element.y],
+                    [element.x + element.width, element.y + element.height],
+                    [element.x, element.y + element.height],
+                  ]}
+                >
+                  {([x, y]) => (
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="4"
+                      fill="#3b82f6"
+                      stroke="white"
+                      stroke-width="1"
+                    />
+                  )}
+                </For>
               </>
             )}
           </g>
         );
 
-      case "circle":
+      case "circle": {
         if (element.width === undefined || element.height === undefined) return null;
         const centerX = element.x + element.width / 2;
         const centerY = element.y + element.height / 2;
@@ -284,26 +288,30 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
                   stroke-width="2"
                   stroke-dasharray="5,5"
                 />
-                {[
-                  [element.x, centerY],
-                  [element.x + element.width, centerY],
-                  [centerX, element.y],
-                  [centerX, element.y + element.height],
-                ].map(([x, y], i) => (
-                  <circle
-                    key={i}
-                    cx={x}
-                    cy={y}
-                    r="4"
-                    fill="#3b82f6"
-                    stroke="white"
-                    stroke-width="1"
-                  />
-                ))}
+                <For
+                  each={[
+                    [element.x, centerY],
+                    [element.x + element.width, centerY],
+                    [centerX, element.y],
+                    [centerX, element.y + element.height],
+                  ]}
+                >
+                  {([x, y]) => (
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="4"
+                      fill="#3b82f6"
+                      stroke="white"
+                      stroke-width="1"
+                    />
+                  )}
+                </For>
               </>
             )}
           </g>
         );
+      }
 
       case "line":
         if (element.width === undefined || element.height === undefined) return null;
@@ -351,9 +359,9 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
           </g>
         );
 
-      case "text":
+      case "text": {
         if (!element.text) return null;
-        const textSize = element.fontSize || 16;
+        const textSize = String(element.fontSize || 16);
         return (
           <g>
             <text
@@ -390,36 +398,59 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
             )}
           </g>
         );
+      }
 
       default:
         return null;
     }
   };
 
-  // 初始化 SVG
+  // 初始化 SVG 并监听容器大小变化
   onMount(() => {
     if (!containerRef) return;
 
     const resizeSVG = () => {
       if (!containerRef) return;
       const rect = containerRef.getBoundingClientRect();
-      setViewBox({
-        width: props.width || rect.width,
-        height: props.height || rect.height,
-      });
+      const width = props.width || rect.width || 1000;
+      const height = props.height || rect.height || 1000;
+      setViewBox({ width, height });
     };
 
+    // 初始设置
     resizeSVG();
-    window.addEventListener("resize", resizeSVG);
+
+    // 使用 ResizeObserver 监听容器大小变化
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && containerRef) {
+      resizeObserver = new ResizeObserver(() => {
+        resizeSVG();
+      });
+      resizeObserver.observe(containerRef);
+    } else {
+      // 降级方案：使用 window resize 事件
+      window.addEventListener("resize", resizeSVG);
+    }
+
+    // 键盘事件
     window.addEventListener("keydown", handleKeyDown);
 
     onCleanup(() => {
-      window.removeEventListener("resize", resizeSVG);
+      if (resizeObserver && containerRef) {
+        resizeObserver.unobserve(containerRef);
+        resizeObserver.disconnect();
+      } else {
+        window.removeEventListener("resize", resizeSVG);
+      }
       window.removeEventListener("keydown", handleKeyDown);
     });
   });
 
-  const vb = viewBox();
+  // 使用 createMemo 确保 viewBox 响应式更新
+  const viewBoxString = createMemo(() => {
+    const vb = viewBox();
+    return `0 0 ${vb.width} ${vb.height}`;
+  });
 
   return (
     <div
@@ -429,9 +460,11 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
     >
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${vb.width} ${vb.height}`}
+        viewBox={viewBoxString()}
         class="absolute inset-0 w-full h-full cursor-crosshair"
         preserveAspectRatio="xMidYMid meet"
+        width="100%"
+        height="100%"
         onMouseDown={handlePointerDown}
         onMouseMove={handlePointerMove}
         onMouseUp={handlePointerUp}
