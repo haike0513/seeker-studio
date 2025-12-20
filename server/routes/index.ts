@@ -12,6 +12,7 @@ import workflowExecutionRoutes from "./workflow-execution.routes";
 import knowledgeBaseRoutes from "./knowledge-base.routes";
 import queueRoutes from "./queue.routes";
 import newsRoutes from "./news.routes";
+import whiteboardRoutes from "./whiteboard.routes";
 
 /**
  * 注册所有路由
@@ -43,4 +44,7 @@ export function registerRoutes(app: Hono): void {
   
   // 任务队列路由
   app.route("/", queueRoutes);
+  
+  // 画板路由
+  app.route("/", whiteboardRoutes);
 }

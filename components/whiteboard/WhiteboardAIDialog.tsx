@@ -14,6 +14,8 @@ import type {
 import {
   addElement,
   clearCanvas,
+  deleteElement,
+  updateElement,
 } from "@/lib/whiteboard/store.js";
 import type { DrawingElement } from "@/lib/whiteboard/types.js";
 
@@ -33,11 +35,9 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
   };
 
   const { messages: streamMessages, sendMessage, status } = useChat({
-    api: "/api/chat",
+    api: "/api/whiteboard/chat",
     body: () => ({ 
       chatId: chatId(),
-      // 添加画板上下文，让AI知道这是画板助手
-      context: "whiteboard",
     }),
     initialMessages: initialUIMessages(),
   });
@@ -92,10 +92,13 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
     
     if (lastMessage.role === "assistant") {
       lastProcessedMessageId = lastMessage.id;
+      
+
+      // 如果没有工具调用，尝试从文本中解析
       const text = lastMessage.parts
-        .filter((p) => p.type === "text")
+        ?.filter((p) => p.type === "text")
         .map((p) => p.text)
-        .join("");
+        .join("") || "";
 
       // 尝试解析JSON指令
       try {
@@ -119,12 +122,15 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
   const executeInstruction = (instruction: {
     action: string;
     type?: string;
+    elementId?: string;
     x?: number;
     y?: number;
     width?: number;
     height?: number;
     text?: string;
     color?: string;
+    strokeWidth?: number;
+    fontSize?: number;
     [key: string]: unknown;
   }) => {
     switch (instruction.action) {
@@ -138,8 +144,8 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
             height: instruction.height,
             text: instruction.text,
             color: instruction.color || "#000000",
-            strokeWidth: 2,
-            fontSize: 16,
+            strokeWidth: instruction.strokeWidth ?? 2,
+            fontSize: instruction.fontSize ?? 16,
           };
           addElement(element);
         }
@@ -147,6 +153,25 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
 
       case "clear":
         clearCanvas();
+        break;
+
+      case "delete":
+        if (instruction.elementId) {
+          deleteElement(instruction.elementId);
+        }
+        break;
+
+      case "update":
+        if (instruction.elementId) {
+          const updates: Partial<DrawingElement> = {};
+          if (instruction.x !== undefined) updates.x = instruction.x;
+          if (instruction.y !== undefined) updates.y = instruction.y;
+          if (instruction.width !== undefined) updates.width = instruction.width;
+          if (instruction.height !== undefined) updates.height = instruction.height;
+          if (instruction.color !== undefined) updates.color = instruction.color;
+          if (instruction.text !== undefined) updates.text = instruction.text;
+          updateElement(instruction.elementId, updates);
+        }
         break;
 
       default:
