@@ -172,6 +172,11 @@ export default function Layout(props: { children?: JSX.Element }) {
                     知识库
                   </SidebarNavLink>
                 </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarNavLink href="/whiteboard" icon={WhiteboardIcon} tooltip="画板">
+                    画板
+                  </SidebarNavLink>
+                </SidebarMenuItem>
                 <Collapsible as={SidebarMenuItem} class="group/collapsible">
                   <SidebarMenuButton as={CollapsibleTrigger} tooltip="Platform">
                     <DatabaseIcon />
@@ -479,6 +484,24 @@ function FeaturesIcon() {
       <rect x="14" y="3" width="7" height="7" rx="1" />
       <rect x="14" y="14" width="7" height="7" rx="1" />
       <rect x="3" y="14" width="7" height="7" rx="1" />
+    </svg>
+  );
+}
+
+function WhiteboardIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+      <path d="M9 9h6M9 15h6M9 12h6" />
     </svg>
   );
 }

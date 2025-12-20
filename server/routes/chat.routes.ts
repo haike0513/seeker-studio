@@ -173,6 +173,7 @@ app.post("/api/chat", async (c) => {
         }),
       ).min(1),
       chatId: z.string().optional(),
+      context: z.string().optional(), // 添加上下文字段（如 "whiteboard"）
       attachments: z.array(
         z.object({
           fileType: z.string(),
@@ -190,7 +191,8 @@ app.post("/api/chat", async (c) => {
     return errorResponse(c, validation.error, 400);
   }
 
-  const { messages, chatId: reqChatId, attachments } = validation.data as CreateChatRequest & {
+  const { messages, chatId: reqChatId, context, attachments } = validation.data as CreateChatRequest & {
+    context?: string;
     attachments?: Array<{
       fileType: string;
       mimeType: string;
@@ -260,11 +262,32 @@ app.post("/api/chat", async (c) => {
     }
   }
 
+  // 构建系统提示词（如果是画板上下文）
+  const systemPrompt = context === "whiteboard" ? `你是一个画板助手，可以帮助用户通过自然语言创建和操作画板元素。
+
+可用的操作：
+1. 创建元素：
+   - 矩形：{"action": "create", "type": "rectangle", "x": 100, "y": 100, "width": 200, "height": 150, "color": "#000000"}
+   - 圆形：{"action": "create", "type": "circle", "x": 100, "y": 100, "width": 100, "height": 100, "color": "#000000"}
+   - 线条：{"action": "create", "type": "line", "x": 100, "y": 100, "width": 200, "height": 200, "color": "#000000"}
+   - 文本：{"action": "create", "type": "text", "x": 100, "y": 100, "text": "Hello", "color": "#000000", "fontSize": 16}
+
+2. 清空画板：
+   {"action": "clear"}
+
+当用户描述想要创建的内容时，你应该：
+1. 理解用户的意图
+2. 返回一个JSON格式的指令（用\`\`\`json代码块包裹）
+3. 同时用自然语言解释你将要做什么` : undefined;
+
   // 转换消息格式为 ai-sdk 格式
-  const aiMessages = messages.map((msg) => ({
-    role: msg.role as "user" | "assistant" | "system",
-    content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
-  }));
+  const aiMessages = [
+    ...(systemPrompt ? [{ role: "system" as const, content: systemPrompt }] : []),
+    ...messages.map((msg) => ({
+      role: msg.role as "user" | "assistant" | "system",
+      content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content),
+    })),
+  ];
 
   // 使用 LMStudio provider
   const model = process.env.MODEL_NAME || "qwen/qwen3-vl-8b";
