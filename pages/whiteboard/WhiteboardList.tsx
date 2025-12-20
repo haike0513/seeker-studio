@@ -1,17 +1,21 @@
 import type { Data } from "./+data";
 import { For, Show, createSignal } from "solid-js";
 import { useData } from "vike-solid/useData";
+import { navigate } from "vike/client/router";
 import { Link } from "@/components/Link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
 import { Button } from "@/registry/ui/button";
 import { PlusIcon, PencilIcon, TrashIcon } from "lucide-solid";
 
 export function WhiteboardList() {
-  const { whiteboards } = useData<Data>();
+  const { whiteboards: initialWhiteboards } = useData<Data>();
+  const [whiteboards, setWhiteboards] = createSignal(
+    Array.isArray(initialWhiteboards) ? initialWhiteboards : []
+  );
   const [deletingId, setDeletingId] = createSignal<string | null>(null);
   const [isCreating, setIsCreating] = createSignal(false);
 
-  const safeWhiteboards = () => Array.isArray(whiteboards) ? whiteboards : [];
+  const safeWhiteboards = () => whiteboards();
 
   const formatDate = (date: Date | null | undefined) => {
     if (!date) return "未知时间";
@@ -44,7 +48,7 @@ export function WhiteboardList() {
         const data = await res.json();
         if (data.success && data.data?.id) {
           // 跳转到新创建的画板
-          window.location.href = `/whiteboard/${data.data.id}`;
+          navigate(`/whiteboard/${data.data.id}`);
         }
       }
     } catch (error) {
@@ -70,8 +74,11 @@ export function WhiteboardList() {
       });
 
       if (res.ok) {
-        // 刷新页面
-        window.location.reload();
+        // 从本地状态中移除被删除的画板，立即更新UI
+        setWhiteboards((prev) => prev.filter((w) => w.id !== id));
+        setDeletingId(null);
+      } else {
+        setDeletingId(null);
       }
     } catch (error) {
       console.error("删除画板失败:", error);

@@ -34,11 +34,34 @@
 
 5. **数据获取**：服务端数据获取在 `+data.ts` 文件中进行，使用 `export function data()` 函数。
 
-6. **路由导航**：优先使用 router 相关的库（如 Vike 的 `Link` 组件、`useNavigate` 等）进行页面导航，避免直接使用 `window.location`。使用 router 库可以：
+6. **路由导航**：优先使用 router 相关的库（如 Vike 的 `Link` 组件、`navigate` 函数等）进行页面导航，避免直接使用 `window.location`。使用 router 库可以：
    - 支持客户端路由，提供更流畅的用户体验
    - 保持 SSR 兼容性，避免服务端渲染错误
    - 利用框架的路由功能（如预加载、过渡动画等）
    - 确保路由状态与框架状态同步
+
+7. **禁止直接使用 `window.location`**：
+   - **禁止使用 `window.location.href`**：不要直接使用 `window.location.href` 进行页面跳转，必须使用 router 库中相关的 API。直接使用会导致页面完全刷新，失去客户端路由的优势，并可能引发 SSR 兼容性问题。
+   - **禁止使用 `window.location.reload()`**：不要使用 `window.location.reload()` 刷新页面，应使用 `navigate()` 函数导航到当前路径来触发数据重新获取。
+   - **正确的使用方式**：
+     - 对于页面跳转：使用 `navigate()` 函数（从 `vike/client/router` 导入）
+       ```typescript
+       import { navigate } from "vike/client/router";
+       
+       // 跳转到新页面
+       navigate("/whiteboard/123");
+       ```
+     - 对于链接导航：使用 `Link` 组件（从 `@/components/Link` 导入）
+       ```typescript
+       import { Link } from "@/components/Link";
+       
+       <Link href="/whiteboard/123">查看画板</Link>
+       ```
+     - 对于刷新当前页面数据：使用 `navigate()` 导航到当前路径
+       ```typescript
+       // 删除操作后刷新列表
+       navigate("/whiteboard");
+       ```
 
 ## TypeScript 规则
 
