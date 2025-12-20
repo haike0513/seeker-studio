@@ -86,18 +86,26 @@ export default function WhiteboardToolbar(props: WhiteboardToolbarProps = {}) {
 
   return (
     <div class="flex flex-col gap-3 p-3 bg-background/95 backdrop-blur-sm rounded-lg border border-border shadow-lg max-w-xs">
-      {/* 折叠/展开按钮 */}
-      <Show when={props.onToggleCollapse}>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={props.onToggleCollapse}
-          class="self-end"
-          title={collapsed() ? "展开工具栏" : "折叠工具栏"}
-        >
-          {collapsed() ? "▶" : "▼"}
-        </Button>
-      </Show>
+      {/* 标题栏（拖动句柄） */}
+      <div
+        data-draggable-handle
+        class="flex items-center justify-between cursor-move -m-3 p-2 mb-0 rounded-t-lg hover:bg-muted/50 transition-colors"
+      >
+        <span class="text-xs font-medium text-muted-foreground">工具栏</span>
+        <Show when={props.onToggleCollapse}>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onToggleCollapse?.();
+            }}
+            title={collapsed() ? "展开工具栏" : "折叠工具栏"}
+          >
+            {collapsed() ? "▶" : "▼"}
+          </Button>
+        </Show>
+      </div>
 
       <Show when={!collapsed()}>
         {/* 工具选择 */}

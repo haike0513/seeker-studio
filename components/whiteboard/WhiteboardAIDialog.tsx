@@ -317,12 +317,15 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
 
   return (
     <div
-      class={`fixed bottom-4 right-4 z-20 flex flex-col bg-background/95 backdrop-blur-sm rounded-lg border border-border shadow-lg transition-all duration-300 ${
+      class={`flex flex-col bg-background/95 backdrop-blur-sm rounded-lg border border-border shadow-lg transition-all duration-300 ${
         collapsed() ? "w-16 h-16" : "w-96 h-[600px]"
       }`}
     >
-      {/* 标题栏 */}
-      <div class="flex items-center justify-between p-3 border-b border-border shrink-0">
+      {/* 标题栏（拖动句柄） */}
+      <div
+        data-draggable-handle
+        class="flex items-center justify-between p-3 border-b border-border shrink-0 cursor-move hover:bg-muted/50 transition-colors"
+      >
         <Show when={!collapsed()}>
           <h3 class="text-sm font-semibold">AI 画板助手</h3>
         </Show>
@@ -330,7 +333,10 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={props.onToggleCollapse}
+            onClick={(e) => {
+              e.stopPropagation();
+              props.onToggleCollapse?.();
+            }}
             class="ml-auto"
             title={collapsed() ? "展开" : "收缩"}
           >
