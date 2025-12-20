@@ -1,6 +1,6 @@
 /**
- * 画板 AI 聊天路由
- * 专门用于画板编辑的 AI 助手，集成工具调用功能
+ * 画板路由
+ * 包含画板的 CRUD 操作和 AI 聊天功能
  */
 
 import { Hono } from "hono";
@@ -8,8 +8,16 @@ import { streamText } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { z } from "zod";
 import { requireAuth } from "../middleware/auth.middleware";
-import { errorResponse, notFoundResponse } from "../utils/response";
+import { successResponse, errorResponse, notFoundResponse } from "../utils/response";
 import { validateRequestBody } from "../utils/validation";
+import {
+  getUserWhiteboards,
+  getWhiteboardById,
+  createWhiteboard,
+  updateWhiteboard,
+  deleteWhiteboard,
+  verifyWhiteboardOwnership,
+} from "../services/whiteboard.service";
 import {
   createChatSession,
   updateChatSession,
@@ -29,6 +37,120 @@ const lmstudioProvider = createOpenAICompatible({
 });
 
 const app = new Hono();
+
+/**
+ * 获取用户的所有画板
+ */
+app.get("/api/whiteboards", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const whiteboards = await getUserWhiteboards(authResult.user.id);
+  return successResponse(c, whiteboards);
+});
+
+/**
+ * 创建新画板
+ */
+app.post("/api/whiteboards", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const validation = await validateRequestBody(
+    c.req.raw,
+    z.object({
+      title: z.string().min(1).max(200).optional(),
+      elements: z.array(z.any()).optional(),
+    }),
+  );
+
+  if (!validation.success) {
+    return errorResponse(c, validation.error, 400);
+  }
+
+  const { title, elements } = validation.data;
+
+  const whiteboard = await createWhiteboard(
+    authResult.user.id,
+    title || "新画板",
+    elements || [],
+  );
+
+  return successResponse(c, whiteboard);
+});
+
+/**
+ * 获取画板详情
+ */
+app.get("/api/whiteboards/:id", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const id = c.req.param("id");
+  const whiteboardData = await getWhiteboardById(id, authResult.user.id);
+
+  if (!whiteboardData) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  return successResponse(c, whiteboardData);
+});
+
+/**
+ * 更新画板
+ */
+app.patch("/api/whiteboards/:id", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const id = c.req.param("id");
+
+  const validation = await validateRequestBody(
+    c.req.raw,
+    z.object({
+      title: z.string().min(1).max(200).optional(),
+      elements: z.array(z.any()).optional(),
+    }),
+  );
+
+  if (!validation.success) {
+    return errorResponse(c, validation.error, 400);
+  }
+
+  // 验证画板所有权
+  const isOwner = await verifyWhiteboardOwnership(id, authResult.user.id);
+  if (!isOwner) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  const updated = await updateWhiteboard(id, authResult.user.id, validation.data);
+
+  if (!updated) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  return successResponse(c, updated);
+});
+
+/**
+ * 删除画板
+ */
+app.delete("/api/whiteboards/:id", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const id = c.req.param("id");
+
+  // 验证画板所有权
+  const isOwner = await verifyWhiteboardOwnership(id, authResult.user.id);
+  if (!isOwner) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  await deleteWhiteboard(id, authResult.user.id);
+
+  return successResponse(c, { success: true, id }, 200);
+});
 
 /**
  * 画板 AI 聊天接口

@@ -2,6 +2,14 @@ import { createSignal, createMemo } from "solid-js";
 import type { DrawingElement, DrawingTool, WhiteboardState } from "./types.js";
 import { nanoid } from "nanoid";
 
+// 自动保存回调类型
+export type AutoSaveCallback = (elements: DrawingElement[]) => Promise<void>;
+
+// 自动保存相关变量
+let autoSaveCallback: AutoSaveCallback | null = null;
+let autoSaveTimer: number | null = null;
+const AUTO_SAVE_DELAY = 1000; // 1秒防抖延迟
+
 // 创建初始状态
 const createInitialState = (): WhiteboardState => ({
   elements: [],
@@ -52,6 +60,9 @@ export const addElement = (element: Omit<DrawingElement, "id">) => {
     history: newHistory,
     historyIndex: newHistory.length - 1,
   }));
+
+  // 触发自动保存
+  triggerAutoSave(newElements);
   
   return newElement;
 };
@@ -71,6 +82,9 @@ export const updateElement = (id: string, updates: Partial<DrawingElement>) => {
     history: newHistory,
     historyIndex: newHistory.length - 1,
   }));
+
+  // 触发自动保存
+  triggerAutoSave(newElements);
 };
 
 // 删除元素
@@ -86,6 +100,9 @@ export const deleteElement = (id: string) => {
     history: newHistory,
     historyIndex: newHistory.length - 1,
   }));
+
+  // 触发自动保存
+  triggerAutoSave(newElements);
 };
 
 // 选择元素
@@ -153,6 +170,9 @@ export const clearCanvas = () => {
     history: newHistory,
     historyIndex: newHistory.length - 1,
   }));
+
+  // 触发自动保存
+  triggerAutoSave([]);
 };
 
 // 导出画板数据
@@ -164,7 +184,7 @@ export const exportData = (): string => {
 };
 
 // 导入画板数据
-export const importData = (data: string) => {
+export const importData = (data: string, skipAutoSave = true) => {
   try {
     const parsed = JSON.parse(data);
     if (parsed.elements && Array.isArray(parsed.elements)) {
@@ -178,6 +198,11 @@ export const importData = (data: string) => {
         historyIndex: newHistory.length - 1,
         selectedElementId: null,
       }));
+
+      // 导入时不自动保存（避免覆盖服务器数据）
+      if (!skipAutoSave) {
+        triggerAutoSave(parsed.elements);
+      }
       return true;
     }
   } catch (error) {
@@ -189,5 +214,39 @@ export const importData = (data: string) => {
 // 重置状态
 export const resetState = () => {
   setState(createInitialState());
+};
+
+// 设置自动保存回调
+export const setAutoSaveCallback = (callback: AutoSaveCallback | null) => {
+  autoSaveCallback = callback;
+};
+
+// 触发自动保存（防抖处理）
+const triggerAutoSave = (elements: DrawingElement[]) => {
+  if (!autoSaveCallback) return;
+
+  // 清除之前的定时器
+  if (autoSaveTimer !== null) {
+    clearTimeout(autoSaveTimer);
+  }
+
+  // 设置新的定时器
+  autoSaveTimer = window.setTimeout(async () => {
+    try {
+      await autoSaveCallback?.(elements);
+    } catch (error) {
+      console.error("自动保存失败:", error);
+    }
+  }, AUTO_SAVE_DELAY);
+};
+
+// 立即保存（不防抖）
+export const saveNow = async (elements: DrawingElement[]) => {
+  if (!autoSaveCallback) return;
+  try {
+    await autoSaveCallback(elements);
+  } catch (error) {
+    console.error("保存失败:", error);
+  }
 };
 

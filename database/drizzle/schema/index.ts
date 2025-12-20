@@ -5,3 +5,4 @@ export * from "./news";
 export * from "./chat";
 export * from "./workflow";
 export * from "./knowledge-base";
+export * from "./whiteboard";

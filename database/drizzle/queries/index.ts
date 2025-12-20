@@ -4,3 +4,4 @@
 
 export * from "./news";
 export * from "./todos";
+export * from "./whiteboard";

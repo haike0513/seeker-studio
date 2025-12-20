@@ -29,6 +29,13 @@
       "when": 1765757076236,
       "tag": "0003_quiet_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1766242994224,
+      "tag": "0004_add_whiteboard_table",
+      "breakpoints": true
     }
   ]
 }
