@@ -12,6 +12,7 @@ import { successResponse, errorResponse, notFoundResponse } from "../utils/respo
 import { validateRequestBody } from "../utils/validation";
 import {
   getUserWhiteboards,
+  getUserWhiteboardsPaginated,
   getWhiteboardById,
   createWhiteboard,
   updateWhiteboard,
@@ -39,12 +40,31 @@ const lmstudioProvider = createOpenAICompatible({
 const app = new Hono();
 
 /**
- * 获取用户的所有画板
+ * 获取用户的所有画板（支持分页）
  */
 app.get("/api/whiteboards", async (c) => {
   const authResult = await requireAuth(c);
   if (authResult instanceof Response) return authResult;
 
+  // 解析查询参数
+  const url = new URL(c.req.url);
+  const pageParam = url.searchParams.get("page");
+  const pageSizeParam = url.searchParams.get("pageSize");
+  
+  // 如果提供了分页参数，使用分页接口
+  if (pageParam || pageSizeParam) {
+    const page = Math.max(1, parseInt(pageParam || "1", 10));
+    const pageSize = Math.max(1, Math.min(100, parseInt(pageSizeParam || "12", 10))); // 限制每页最多100条
+    
+    const result = await getUserWhiteboardsPaginated(
+      authResult.user.id,
+      page,
+      pageSize,
+    );
+    return successResponse(c, result);
+  }
+
+  // 否则返回所有画板（向后兼容）
   const whiteboards = await getUserWhiteboards(authResult.user.id);
   return successResponse(c, whiteboards);
 });

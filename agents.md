@@ -375,9 +375,16 @@
 
 ### 组件使用规范
 
-1. **优先使用注册组件**：
-   - 从 `@/registry/ui/*` 导入组件（`Button`, `Card`, `Badge`, `Dialog`, `TextField` 等）
-   - 这些组件已包含样式和交互逻辑，保持一致的设计语言
+1. **优先使用 UI 组件**：
+   - **优先从 `@/components/ui/*` 导入组件**（`Button`, `Card`, `Badge`, `Dialog`, `TextField` 等）
+   - 这些组件位于 `components/ui/` 目录，已包含样式和交互逻辑，保持一致的设计语言
+   - 导入示例：
+     ```typescript
+     import { Button } from "@/components/ui/button";
+     import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+     import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+     ```
+   - 如果 `components/ui/` 中没有所需组件，再考虑使用 `@/registry/ui/*` 中的组件
 
 2. **组件组合**：
    - 复杂 UI 通过组合简单组件构建
@@ -389,9 +396,9 @@
    - 图标与文本使用 `gap-2` 保持间距
 
 4. **UI 文件夹保护**：
-   - 尽量不要修改 `components/registry/ui/` 文件夹中的文件
-   - 这些文件通常是自动生成或来自第三方组件库，修改可能导致更新冲突
-   - 如需自定义组件，应在 `components/` 目录下创建新组件，或通过组合现有组件实现
+   - `components/ui/` 目录中的组件是项目的主要 UI 组件库，可以根据项目需求进行修改和定制
+   - `components/registry/ui/` 文件夹中的文件通常是自动生成或来自第三方组件库，尽量不要修改，修改可能导致更新冲突
+   - 如需自定义组件，应在 `components/` 目录下创建新组件，或通过组合 `components/ui/` 中的现有组件实现
 
 ### 无障碍设计（A11y）
 

@@ -7,6 +7,10 @@ import { whiteboard } from "@/database/drizzle/schema/whiteboard";
 import { and, desc, eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import type { Whiteboard } from "@/database/drizzle/schema/whiteboard";
+import {
+  getAllWhiteboardsPaginated,
+  getWhiteboardCount,
+} from "@/database/drizzle/queries/whiteboard";
 
 /**
  * 获取用户的所有画板
@@ -19,6 +23,31 @@ export async function getUserWhiteboards(userId: string): Promise<Whiteboard[]> 
     .orderBy(desc(whiteboard.updatedAt));
 
   return whiteboards;
+}
+
+/**
+ * 获取用户画板（分页）
+ */
+export async function getUserWhiteboardsPaginated(
+  userId: string,
+  page: number = 1,
+  pageSize: number = 12,
+): Promise<{ items: Whiteboard[]; total: number; page: number; pageSize: number; hasMore: boolean }> {
+  const [whiteboards, countResult] = await Promise.all([
+    getAllWhiteboardsPaginated(db, userId, page, pageSize),
+    getWhiteboardCount(db, userId),
+  ]);
+
+  const total = countResult[0]?.count ?? 0;
+  const hasMore = page * pageSize < total;
+
+  return {
+    items: whiteboards,
+    total,
+    page,
+    pageSize,
+    hasMore,
+  };
 }
 
 /**

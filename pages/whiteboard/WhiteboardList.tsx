@@ -1,21 +1,92 @@
 import type { Data } from "./+data";
-import { For, Show, createSignal } from "solid-js";
+import { For, Show, createSignal, createResource } from "solid-js";
 import { useData } from "vike-solid/useData";
 import { navigate } from "vike/client/router";
 import { Link } from "@/components/Link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
 import { Button } from "@/registry/ui/button";
+import {
+  Pagination,
+  PaginationItems,
+  PaginationItem,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
 import { PlusIcon, PencilIcon, TrashIcon } from "lucide-solid";
 
 export function WhiteboardList() {
-  const { whiteboards: initialWhiteboards } = useData<Data>();
+  const initialData = useData<Data>();
+  // 将 initialData 转换为标准格式（兼容旧格式）
+  const normalizedInitialData = initialData.items 
+    ? initialData 
+    : { 
+        items: (initialData as any).whiteboards || [], 
+        total: initialData.total || 0, 
+        page: initialData.page || 1, 
+        pageSize: initialData.pageSize || 12,
+        hasMore: initialData.hasMore || false,
+      };
+  
+  const [page, setPage] = createSignal(normalizedInitialData.page || 1);
+  const pageSize = normalizedInitialData.pageSize || 12;
+  
+  const [whiteboardsData, { refetch }] = createResource(
+    () => page(),
+    async (currentPage) => {
+      const res = await fetch(`/api/whiteboards?page=${currentPage}&pageSize=${pageSize}`, {
+        credentials: "include",
+      });
+      if (!res.ok) {
+        throw new Error("Failed to fetch whiteboards");
+      }
+      const json = await res.json();
+      // 支持标准分页格式 (items) 和旧格式 (whiteboards) 的兼容
+      const data = json.data || {};
+      if (data.items) {
+        // 标准分页格式
+        return {
+          items: data.items,
+          total: data.total || 0,
+          page: data.page || currentPage,
+          pageSize: data.pageSize || pageSize,
+          hasMore: data.hasMore || false,
+        };
+      } else {
+        // 兼容旧格式
+        return {
+          items: data.whiteboards || [],
+          total: data.total || 0,
+          page: data.page || currentPage,
+          pageSize: data.pageSize || pageSize,
+          hasMore: false,
+        };
+      }
+    },
+    { initialValue: normalizedInitialData }
+  );
+  
   const [whiteboards, setWhiteboards] = createSignal(
-    Array.isArray(initialWhiteboards) ? initialWhiteboards : []
+    () => whiteboardsData()?.items || []
   );
   const [deletingId, setDeletingId] = createSignal<string | null>(null);
   const [isCreating, setIsCreating] = createSignal(false);
+  
+  const total = () => whiteboardsData()?.total || 0;
+  const totalPages = () => Math.ceil(total() / pageSize);
+  const currentPage = () => whiteboardsData()?.page || page();
 
   const safeWhiteboards = () => whiteboards();
+  
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages()) {
+      setPage(newPage);
+      // 更新 URL 但不刷新页面
+      const url = new URL(window.location.href);
+      url.searchParams.set("page", newPage.toString());
+      window.history.pushState({}, "", url.toString());
+    }
+  };
 
   const formatDate = (date: Date | null | undefined) => {
     if (!date) return "未知时间";
@@ -74,8 +145,8 @@ export function WhiteboardList() {
       });
 
       if (res.ok) {
-        // 从本地状态中移除被删除的画板，立即更新UI
-        setWhiteboards((prev) => prev.filter((w) => w.id !== id));
+        // 刷新数据以更新列表和总数
+        void refetch();
         setDeletingId(null);
       } else {
         setDeletingId(null);
@@ -161,6 +232,21 @@ export function WhiteboardList() {
             )}
           </For>
         </div>
+      </Show>
+      
+      <Show when={total() > pageSize}>
+        <Pagination
+          count={totalPages()}
+          page={currentPage()}
+          onPageChange={handlePageChange}
+          fixedItems
+          itemComponent={(props) => <PaginationItem page={props.page} />}
+          ellipsisComponent={(props) => <PaginationEllipsis />}
+        >
+          <PaginationPrevious />
+          <PaginationItems />
+          <PaginationNext />
+        </Pagination>
       </Show>
     </div>
   );
