@@ -1,4 +1,5 @@
 import { createSignal, createMemo } from "solid-js";
+import { isServer } from "solid-js/web";
 import type { DrawingElement, DrawingTool, WhiteboardState } from "./types.js";
 import { nanoid } from "nanoid";
 
@@ -8,7 +9,7 @@ export type AutoSaveCallback = (elements: DrawingElement[]) => Promise<void>;
 // 自动保存相关变量
 let autoSaveCallback: AutoSaveCallback | null = null;
 let autoSaveTimer: number | null = null;
-const AUTO_SAVE_DELAY = 1000; // 1秒防抖延迟
+const AUTO_SAVE_DELAY = 60000; // 60秒防抖延迟
 
 // 创建初始状态
 const createInitialState = (): WhiteboardState => ({
@@ -223,7 +224,7 @@ export const setAutoSaveCallback = (callback: AutoSaveCallback | null) => {
 
 // 触发自动保存（防抖处理）
 const triggerAutoSave = (elements: DrawingElement[]) => {
-  if (!autoSaveCallback) return;
+  if (!autoSaveCallback || isServer) return;
 
   // 清除之前的定时器
   if (autoSaveTimer !== null) {

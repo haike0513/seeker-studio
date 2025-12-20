@@ -1,5 +1,5 @@
 import type { Data } from "./+data";
-import { For, Show, createSignal, createResource } from "solid-js";
+import { For, Show, createSignal, createResource, createMemo } from "solid-js";
 import { useData } from "vike-solid/useData";
 import { navigate } from "vike/client/router";
 import { Link } from "@/components/Link";
@@ -21,7 +21,7 @@ export function WhiteboardList() {
   const normalizedInitialData = initialData.items 
     ? initialData 
     : { 
-        items: (initialData as any).whiteboards || [], 
+        items: ('whiteboards' in initialData ? (initialData as { whiteboards?: unknown[] }).whiteboards : []) || [], 
         total: initialData.total || 0, 
         page: initialData.page || 1, 
         pageSize: initialData.pageSize || 12,
@@ -66,9 +66,8 @@ export function WhiteboardList() {
     { initialValue: normalizedInitialData }
   );
   
-  const [whiteboards, setWhiteboards] = createSignal(
-    () => whiteboardsData()?.items || []
-  );
+  // 使用 createMemo 创建计算属性，从 whiteboardsData 中提取 items
+  const whiteboards = createMemo(() => whiteboardsData()?.items || []);
   const [deletingId, setDeletingId] = createSignal<string | null>(null);
   const [isCreating, setIsCreating] = createSignal(false);
   
@@ -240,8 +239,12 @@ export function WhiteboardList() {
           page={currentPage()}
           onPageChange={handlePageChange}
           fixedItems
-          itemComponent={(props) => <PaginationItem page={props.page} />}
-          ellipsisComponent={(props) => <PaginationEllipsis />}
+          itemComponent={(props: { page: number }) => (
+            <PaginationItem page={props.page}>
+              {props.page}
+            </PaginationItem>
+          )}
+          ellipsisComponent={() => <PaginationEllipsis />}
         >
           <PaginationPrevious />
           <PaginationItems />
