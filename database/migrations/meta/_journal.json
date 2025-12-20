@@ -36,6 +36,13 @@
       "when": 1766242994224,
       "tag": "0004_add_whiteboard_table",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1766272918745,
+      "tag": "0005_far_hex",
+      "breakpoints": true
     }
   ]
 }

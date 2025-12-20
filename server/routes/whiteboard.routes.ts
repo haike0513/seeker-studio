@@ -18,6 +18,9 @@ import {
   updateWhiteboard,
   deleteWhiteboard,
   verifyWhiteboardOwnership,
+  getWhiteboardByShareToken,
+  enableWhiteboardSharing,
+  disableWhiteboardSharing,
 } from "../services/whiteboard.service";
 import {
   createChatSession,
@@ -88,15 +91,22 @@ app.post("/api/whiteboards", async (c) => {
     return errorResponse(c, validation.error, 400);
   }
 
-  const { title, elements } = validation.data;
+  const { title, elements, metadata, backgroundColor, viewState } = validation.data as {
+    title?: string;
+    elements?: unknown[];
+    metadata?: unknown;
+    backgroundColor?: string;
+    viewState?: unknown;
+  };
 
-  const whiteboard = await createWhiteboard(
+  const whiteboardData = await createWhiteboard(
     authResult.user.id,
     title || "新画板",
     elements || [],
+    { metadata, backgroundColor, viewState },
   );
 
-  return successResponse(c, whiteboard);
+  return successResponse(c, whiteboardData);
 });
 
 /**
@@ -130,6 +140,9 @@ app.patch("/api/whiteboards/:id", async (c) => {
     z.object({
       title: z.string().min(1).max(200).optional(),
       elements: z.array(z.any()).optional(),
+      metadata: z.any().optional(),
+      backgroundColor: z.string().optional(),
+      viewState: z.any().optional(),
     }),
   );
 
@@ -354,6 +367,251 @@ app.post("/api/whiteboard/chat", async (c) => {
   return result.toUIMessageStreamResponse({
     headers: {
       "X-Chat-Id": chatId,
+    },
+  });
+});
+
+/**
+ * 通过分享token获取画板（公开访问，无需认证）
+ */
+app.get("/api/whiteboards/shared/:token", async (c) => {
+  const token = c.req.param("token");
+  const whiteboardData = await getWhiteboardByShareToken(token);
+
+  if (!whiteboardData) {
+    return notFoundResponse(c, "Whiteboard not found or sharing is disabled");
+  }
+
+  return successResponse(c, whiteboardData);
+});
+
+/**
+ * 启用画板分享（生成分享链接）
+ */
+app.post("/api/whiteboards/:id/share", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const id = c.req.param("id");
+
+  // 验证画板所有权
+  const isOwner = await verifyWhiteboardOwnership(id, authResult.user.id);
+  if (!isOwner) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  const result = await enableWhiteboardSharing(id, authResult.user.id);
+  if (!result) {
+    return errorResponse(c, "Failed to enable sharing", 500);
+  }
+
+  return successResponse(c, result);
+});
+
+/**
+ * 禁用画板分享
+ */
+app.delete("/api/whiteboards/:id/share", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const id = c.req.param("id");
+
+  // 验证画板所有权
+  const isOwner = await verifyWhiteboardOwnership(id, authResult.user.id);
+  if (!isOwner) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  const success = await disableWhiteboardSharing(id, authResult.user.id);
+  if (!success) {
+    return errorResponse(c, "Failed to disable sharing", 500);
+  }
+
+  return successResponse(c, { success: true });
+});
+
+/**
+ * 导出画板为JSON格式
+ */
+app.get("/api/whiteboards/:id/export/json", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const id = c.req.param("id");
+  const whiteboardData = await getWhiteboardById(id, authResult.user.id);
+
+  if (!whiteboardData) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  // 构建导出的JSON数据
+  const exportData = {
+    version: "1.0.0",
+    title: whiteboardData.title,
+    elements: whiteboardData.elements,
+    metadata: whiteboardData.metadata || {},
+    backgroundColor: whiteboardData.backgroundColor || "#ffffff",
+    viewState: whiteboardData.viewState || {},
+    exportedAt: new Date().toISOString(),
+  };
+
+  // 返回JSON文件
+  return c.json(exportData, 200, {
+    "Content-Type": "application/json",
+    "Content-Disposition": `attachment; filename="${whiteboardData.title}.excalidraw"`,
+  });
+});
+
+/**
+ * 导入画板（从JSON文件）
+ */
+app.post("/api/whiteboards/import", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const validation = await validateRequestBody(
+    c.req.raw,
+    z.object({
+      data: z.object({
+        title: z.string().optional(),
+        elements: z.array(z.any()).optional(),
+        metadata: z.any().optional(),
+        backgroundColor: z.string().optional(),
+        viewState: z.any().optional(),
+      }),
+      title: z.string().min(1).max(200).optional(),
+    }),
+  );
+
+  if (!validation.success) {
+    return errorResponse(c, validation.error, 400);
+  }
+
+  const { data: importData, title } = validation.data;
+
+  // 使用导入的数据创建新画板
+  const whiteboardData = await createWhiteboard(
+    authResult.user.id,
+    title || (typeof importData.title === "string" ? importData.title : "导入的画板"),
+    Array.isArray(importData.elements) ? importData.elements : [],
+    {
+      metadata: importData.metadata,
+      backgroundColor: typeof importData.backgroundColor === "string" ? importData.backgroundColor : undefined,
+      viewState: importData.viewState,
+    },
+  );
+
+  return successResponse(c, whiteboardData);
+});
+
+/**
+ * 导出画板为SVG格式
+ */
+app.get("/api/whiteboards/:id/export/svg", async (c) => {
+  const authResult = await requireAuth(c);
+  if (authResult instanceof Response) return authResult;
+
+  const id = c.req.param("id");
+  const whiteboardData = await getWhiteboardById(id, authResult.user.id);
+
+  if (!whiteboardData) {
+    return notFoundResponse(c, "Whiteboard not found");
+  }
+
+  // 构建SVG内容
+  const backgroundColor = (whiteboardData.backgroundColor as string) || "#ffffff";
+  const elements = (whiteboardData.elements as Array<Record<string, unknown>>) || [];
+
+  // 计算画布边界
+  let minX = 0;
+  let minY = 0;
+  let maxX = 1000;
+  let maxY = 1000;
+
+  elements.forEach((el) => {
+    const x = typeof el.x === "number" ? el.x : 0;
+    const y = typeof el.y === "number" ? el.y : 0;
+    const width = typeof el.width === "number" ? el.width : 0;
+    const height = typeof el.height === "number" ? el.height : 0;
+    
+    if (el.x !== undefined) minX = Math.min(minX, x);
+    if (el.y !== undefined) minY = Math.min(minY, y);
+    if (el.x !== undefined && el.width !== undefined) {
+      maxX = Math.max(maxX, x + width);
+    }
+    if (el.y !== undefined && el.height !== undefined) {
+      maxY = Math.max(maxY, y + height);
+    }
+    if (Array.isArray(el.path)) {
+      el.path.forEach((point: unknown) => {
+        if (point && typeof point === "object" && "x" in point && "y" in point) {
+          const px = typeof point.x === "number" ? point.x : 0;
+          const py = typeof point.y === "number" ? point.y : 0;
+          minX = Math.min(minX, px);
+          minY = Math.min(minY, py);
+          maxX = Math.max(maxX, px);
+          maxY = Math.max(maxY, py);
+        }
+      });
+    }
+  });
+
+  const width = Math.max(maxX - minX, 1000);
+  const height = Math.max(maxY - minY, 1000);
+
+  let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+  <rect width="${width}" height="${height}" fill="${backgroundColor}"/>
+`;
+
+  // 渲染元素
+  elements.forEach((el) => {
+    const type = typeof el.type === "string" ? el.type : "";
+    const x = typeof el.x === "number" ? el.x : 0;
+    const y = typeof el.y === "number" ? el.y : 0;
+    const width = typeof el.width === "number" ? el.width : 0;
+    const height = typeof el.height === "number" ? el.height : 0;
+    const color = typeof el.color === "string" ? el.color : "#000";
+    const strokeWidth = typeof el.strokeWidth === "number" ? el.strokeWidth : 2;
+    const fontSize = typeof el.fontSize === "number" ? el.fontSize : 16;
+    const text = typeof el.text === "string" ? el.text : "";
+
+    if (type === "rectangle") {
+      svg += `  <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"/>\n`;
+    } else if (type === "circle") {
+      const radius = (width || height) / 2;
+      const cx = x + radius;
+      const cy = y + radius;
+      svg += `  <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"/>\n`;
+    } else if ((type === "line" || type === "pen") && Array.isArray(el.path) && el.path.length >= 2) {
+      const pathData = el.path
+        .map((point: unknown, idx: number) => {
+          if (point && typeof point === "object" && "x" in point && "y" in point) {
+            const px = typeof point.x === "number" ? point.x : 0;
+            const py = typeof point.y === "number" ? point.y : 0;
+            return `${idx === 0 ? "M" : "L"} ${px} ${py}`;
+          }
+          return "";
+        })
+        .filter(Boolean)
+        .join(" ");
+      if (pathData) {
+        const linecap = type === "pen" ? ' stroke-linecap="round" stroke-linejoin="round"' : "";
+        svg += `  <path d="${pathData}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"${linecap}/>\n`;
+      }
+    } else if (type === "text") {
+      const escapedText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      svg += `  <text x="${x}" y="${y + fontSize}" fill="${color}" font-size="${fontSize}">${escapedText}</text>\n`;
+    }
+  });
+
+  svg += `</svg>`;
+
+  return new Response(svg, {
+    headers: {
+      "Content-Type": "image/svg+xml",
+      "Content-Disposition": `attachment; filename="${whiteboardData.title}.svg"`,
     },
   });
 });

@@ -72,7 +72,12 @@ export async function getWhiteboardById(
 export async function createWhiteboard(
   userId: string,
   title: string,
-  elements: any[] = [],
+  elements: unknown[] = [],
+  options?: {
+    metadata?: unknown;
+    backgroundColor?: string;
+    viewState?: unknown;
+  },
 ): Promise<Whiteboard> {
   const id = nanoid();
   
@@ -83,6 +88,9 @@ export async function createWhiteboard(
       userId,
       title,
       elements: elements || [],
+      ...(options?.metadata !== undefined && { metadata: options.metadata }),
+      ...(options?.backgroundColor !== undefined && { backgroundColor: options.backgroundColor }),
+      ...(options?.viewState !== undefined && { viewState: options.viewState }),
     })
     .returning();
 
@@ -97,7 +105,10 @@ export async function updateWhiteboard(
   userId: string,
   data: {
     title?: string;
-    elements?: any[];
+    elements?: unknown[];
+    metadata?: unknown;
+    backgroundColor?: string;
+    viewState?: unknown;
   },
 ): Promise<Whiteboard | null> {
   const [updated] = await db
@@ -110,6 +121,74 @@ export async function updateWhiteboard(
     .returning();
 
   return updated || null;
+}
+
+/**
+ * 通过分享token获取画板（公开访问）
+ */
+export async function getWhiteboardByShareToken(
+  shareToken: string,
+): Promise<Whiteboard | null> {
+  const results = await db
+    .select()
+    .from(whiteboard)
+    .where(and(
+      eq(whiteboard.shareToken, shareToken),
+      eq(whiteboard.isPublic, true),
+    ))
+    .limit(1);
+
+  return results[0] || null;
+}
+
+/**
+ * 生成分享token并设置为公开
+ */
+export async function enableWhiteboardSharing(
+  id: string,
+  userId: string,
+): Promise<{ shareToken: string; shareUrl: string } | null> {
+  const shareToken = nanoid(32); // 生成32字符的分享token
+  
+  const [updated] = await db
+    .update(whiteboard)
+    .set({
+      shareToken,
+      isPublic: true,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(whiteboard.id, id), eq(whiteboard.userId, userId)))
+    .returning();
+
+  if (!updated) {
+    return null;
+  }
+
+  // 生成分享URL（实际部署时需要替换为实际域名）
+  const baseUrl = process.env.BETTER_AUTH_URL || "http://localhost:3000";
+  const shareUrl = `${baseUrl}/whiteboard/shared/${shareToken}`;
+
+  return { shareToken, shareUrl };
+}
+
+/**
+ * 禁用分享
+ */
+export async function disableWhiteboardSharing(
+  id: string,
+  userId: string,
+): Promise<boolean> {
+  const [updated] = await db
+    .update(whiteboard)
+    .set({
+      shareToken: null,
+      isPublic: false,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(whiteboard.id, id), eq(whiteboard.userId, userId)))
+    .returning();
+
+  return updated !== null;
 }
 
 /**

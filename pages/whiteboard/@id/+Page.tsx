@@ -6,7 +6,14 @@ import WhiteboardAIDialog from "@/components/whiteboard/WhiteboardAIDialog";
 import { useDraggable } from "@/lib/whiteboard/useDraggable";
 import { importData, setAutoSaveCallback, elements } from "@/lib/whiteboard/store";
 import { Button } from "@/registry/ui/button";
-import { SaveIcon, CheckIcon } from "lucide-solid";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/registry/ui/dropdown-menu";
+import { SaveIcon, CheckIcon, MoreVerticalIcon, DownloadIcon, CopyIcon, UploadIcon, LinkIcon, Link2OffIcon } from "lucide-solid";
 import { toast } from "somoto";
 import type { Data } from "./+data";
 
@@ -19,6 +26,9 @@ export default function WhiteboardPage() {
   const [chatId, setChatId] = createSignal<string | undefined>(undefined);
   const [isSaving, setIsSaving] = createSignal(false);
   const [lastSaved, setLastSaved] = createSignal<Date | null>(null);
+  const [shareUrl, setShareUrl] = createSignal<string | null>(null);
+  const [isSharing, setIsSharing] = createSignal(false);
+  const [isExporting, setIsExporting] = createSignal(false);
 
   let containerRef: HTMLDivElement | undefined;
 
@@ -80,6 +90,181 @@ export default function WhiteboardPage() {
     }
   };
 
+  // 导出为JSON
+  const handleExportJSON = async () => {
+    if (!whiteboardId) return;
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/whiteboards/${whiteboardId}/export/json`, {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${whiteboard?.title || "whiteboard"}.excalidraw`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("导出成功");
+      } else {
+        throw new Error("导出失败");
+      }
+    } catch (error) {
+      console.error("导出失败:", error);
+      toast.error("导出失败，请重试");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 导出为SVG
+  const handleExportSVG = async () => {
+    if (!whiteboardId) return;
+    setIsExporting(true);
+    try {
+      const res = await fetch(`/api/whiteboards/${whiteboardId}/export/svg`, {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${whiteboard?.title || "whiteboard"}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("导出成功");
+      } else {
+        throw new Error("导出失败");
+      }
+    } catch (error) {
+      console.error("导出失败:", error);
+      toast.error("导出失败，请重试");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // 启用分享
+  const handleEnableSharing = async () => {
+    if (!whiteboardId) return;
+    setIsSharing(true);
+    try {
+      const res = await fetch(`/api/whiteboards/${whiteboardId}/share`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data?.shareUrl) {
+          setShareUrl(data.data.shareUrl);
+          toast.success("分享链接已生成");
+        } else {
+          throw new Error("生成分享链接失败");
+        }
+      } else {
+        throw new Error("生成分享链接失败");
+      }
+    } catch (error) {
+      console.error("生成分享链接失败:", error);
+      toast.error("生成分享链接失败，请重试");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // 禁用分享
+  const handleDisableSharing = async () => {
+    if (!whiteboardId) return;
+    setIsSharing(true);
+    try {
+      const res = await fetch(`/api/whiteboards/${whiteboardId}/share`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        setShareUrl(null);
+        toast.success("已禁用分享");
+      } else {
+        throw new Error("禁用分享失败");
+      }
+    } catch (error) {
+      console.error("禁用分享失败:", error);
+      toast.error("禁用分享失败，请重试");
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
+  // 复制分享链接
+  const handleCopyShareLink = async () => {
+    const url = shareUrl();
+    if (!url) {
+      await handleEnableSharing();
+      // 等待分享链接生成
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("链接已复制到剪贴板");
+    } catch (error) {
+      console.error("复制失败:", error);
+      toast.error("复制失败，请手动复制");
+    }
+  };
+
+  // 从服务器导入
+  const handleImportFromServer = async () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json,.excalidraw";
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file || !whiteboardId) return;
+
+      try {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const data = event.target?.result as string;
+          if (!data) return;
+
+          try {
+            const jsonData = JSON.parse(data);
+            const res = await fetch("/api/whiteboards/import", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({
+                data: jsonData,
+                title: `${whiteboard?.title || "画板"} (导入)`,
+              }),
+            });
+
+            if (res.ok) {
+              const result = await res.json();
+              if (result.success && result.data?.id) {
+                // 跳转到新导入的画板
+                window.location.href = `/whiteboard/${result.data.id}`;
+                toast.success("导入成功");
+              }
+            } else {
+              throw new Error("导入失败");
+            }
+          } catch (error) {
+            console.error("导入失败:", error);
+            toast.error("导入失败，请检查文件格式");
+          }
+        };
+        reader.readAsText(file);
+      } catch (error) {
+        console.error("读取文件失败:", error);
+        toast.error("读取文件失败");
+      }
+    };
+    input.click();
+  };
+
   // 创建画板专用的聊天会话并初始化对话框位置
   onMount(async () => {
     // 加载画板数据
@@ -94,6 +279,12 @@ export default function WhiteboardPage() {
       } catch (error) {
         console.error("加载画板数据失败:", error);
       }
+    }
+
+    // 检查是否有分享链接
+    if (whiteboard?.shareToken) {
+      const baseUrl = window.location.origin;
+      setShareUrl(`${baseUrl}/whiteboard/shared/${whiteboard.shareToken}`);
     }
 
     // 设置自动保存回调
@@ -161,6 +352,43 @@ export default function WhiteboardPage() {
             <SaveIcon class="w-4 h-4 mr-2" />
             {isSaving() ? "保存中..." : "保存"}
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger as="button" class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-3" disabled={isExporting() || isSharing()}>
+              <MoreVerticalIcon class="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={handleExportJSON} disabled={isExporting()}>
+                <DownloadIcon class="w-4 h-4 mr-2" />
+                导出为 JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleExportSVG} disabled={isExporting()}>
+                <DownloadIcon class="w-4 h-4 mr-2" />
+                导出为 SVG
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <Show when={shareUrl()}>
+                <DropdownMenuItem onClick={handleCopyShareLink}>
+                  <CopyIcon class="w-4 h-4 mr-2" />
+                  复制分享链接
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDisableSharing} disabled={isSharing()}>
+                  <Link2OffIcon class="w-4 h-4 mr-2" />
+                  禁用分享
+                </DropdownMenuItem>
+              </Show>
+              <Show when={!shareUrl()}>
+                <DropdownMenuItem onClick={handleEnableSharing} disabled={isSharing()}>
+                  <LinkIcon class="w-4 h-4 mr-2" />
+                  启用分享
+                </DropdownMenuItem>
+              </Show>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleImportFromServer}>
+                <UploadIcon class="w-4 h-4 mr-2" />
+                从文件导入
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

@@ -48,6 +48,9 @@ export function insertWhiteboard(
     userId: string;
     title: string;
     elements?: any[];
+    metadata?: any;
+    backgroundColor?: string;
+    viewState?: any;
   }
 ) {
   return db.insert(whiteboard).values({
@@ -55,6 +58,9 @@ export function insertWhiteboard(
     userId: data.userId,
     title: data.title,
     elements: data.elements || [],
+    metadata: data.metadata,
+    backgroundColor: data.backgroundColor,
+    viewState: data.viewState,
   });
 }
 
@@ -65,6 +71,9 @@ export function updateWhiteboard(
   data: {
     title?: string;
     elements?: any[];
+    metadata?: any;
+    backgroundColor?: string;
+    viewState?: any;
   }
 ) {
   return db

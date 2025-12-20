@@ -19,6 +19,11 @@ export const guard = (pageContext: PageContextServer) => {
     return;
   }
 
+  // 允许访问公开的分享页面（无需登录）
+  if (pageContext.urlPathname.startsWith("/whiteboard/shared/")) {
+    return;
+  }
+
   // 如果用户未登录，渲染登录页面
   // 使用 render() 而不是 redirect() 可以保持 URL 不变
   // 这样在登录流程中 URL 会保持为原始路径

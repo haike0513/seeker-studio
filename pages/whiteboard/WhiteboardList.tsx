@@ -7,13 +7,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/reg
 import { Button } from "@/registry/ui/button";
 import { PaginatedList } from "@/components/PaginatedList";
 import { usePagination } from "@/lib/hooks/usePagination";
-import { PlusIcon, PencilIcon, TrashIcon } from "lucide-solid";
+import { PlusIcon, PencilIcon, TrashIcon, MoreVerticalIcon, DownloadIcon, LinkIcon } from "lucide-solid";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/registry/ui/dropdown-menu";
 import type { Whiteboard } from "@/database/drizzle/schema/whiteboard";
+import { toast } from "somoto";
 
 export function WhiteboardList() {
   const initialData = useData<Data>();
   const [deletingId, setDeletingId] = createSignal<string | null>(null);
   const [isCreating, setIsCreating] = createSignal(false);
+  const [exportingId, setExportingId] = createSignal<string | null>(null);
+  const [sharingId, setSharingId] = createSignal<string | null>(null);
   
   // 使用分页 hook
   const pagination = usePagination<Whiteboard>({
@@ -130,6 +140,101 @@ export function WhiteboardList() {
     }
   };
 
+  const handleExportJSON = async (id: string, title: string, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExportingId(id);
+    try {
+      const res = await fetch(`/api/whiteboards/${id}/export/json`, {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${title || "whiteboard"}.excalidraw`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("导出成功");
+      } else {
+        throw new Error("导出失败");
+      }
+    } catch (error) {
+      console.error("导出失败:", error);
+      toast.error("导出失败，请重试");
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  const handleExportSVG = async (id: string, title: string, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExportingId(id);
+    try {
+      const res = await fetch(`/api/whiteboards/${id}/export/svg`, {
+        credentials: "include",
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${title || "whiteboard"}.svg`;
+        a.click();
+        URL.revokeObjectURL(url);
+        toast.success("导出成功");
+      } else {
+        throw new Error("导出失败");
+      }
+    } catch (error) {
+      console.error("导出失败:", error);
+      toast.error("导出失败，请重试");
+    } finally {
+      setExportingId(null);
+    }
+  };
+
+  const handleCopyShareLink = async (whiteboard: Whiteboard, e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSharingId(whiteboard.id);
+    try {
+      let shareUrl = "";
+      if (whiteboard.shareToken) {
+        shareUrl = `${window.location.origin}/whiteboard/shared/${whiteboard.shareToken}`;
+      } else {
+        // 启用分享
+        const res = await fetch(`/api/whiteboards/${whiteboard.id}/share`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data?.shareUrl) {
+            shareUrl = data.data.shareUrl;
+            toast.success("分享链接已生成");
+          } else {
+            throw new Error("生成分享链接失败");
+          }
+        } else {
+          throw new Error("生成分享链接失败");
+        }
+      }
+      
+      if (shareUrl) {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("链接已复制到剪贴板");
+      }
+    } catch (error) {
+      console.error("复制分享链接失败:", error);
+      toast.error("操作失败，请重试");
+    } finally {
+      setSharingId(null);
+    }
+  };
+
   return (
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -164,27 +269,62 @@ export function WhiteboardList() {
                   <CardTitle class="text-lg line-clamp-2 flex-1">
                     {whiteboard.title}
                   </CardTitle>
-                  <div class="flex items-center gap-1 shrink-0">
-                    <button
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      as="button"
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
-                        // TODO: 实现编辑标题功能
                       }}
                       class="text-muted-foreground hover:text-foreground transition-colors p-1"
-                      title="编辑"
+                      disabled={exportingId() === whiteboard.id || sharingId() === whiteboard.id}
                     >
-                      <PencilIcon class="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={(e) => handleDelete(whiteboard.id, e)}
-                      class="text-muted-foreground hover:text-destructive transition-colors p-1"
-                      title="删除"
-                      disabled={deletingId() === whiteboard.id}
-                    >
-                      <TrashIcon class="w-4 h-4" />
-                    </button>
-                  </div>
+                      <MoreVerticalIcon class="w-4 h-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem
+                        onClick={(e) => handleExportJSON(whiteboard.id, whiteboard.title, e)}
+                        disabled={exportingId() === whiteboard.id}
+                      >
+                        <DownloadIcon class="w-4 h-4 mr-2" />
+                        导出为 JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => handleExportSVG(whiteboard.id, whiteboard.title, e)}
+                        disabled={exportingId() === whiteboard.id}
+                      >
+                        <DownloadIcon class="w-4 h-4 mr-2" />
+                        导出为 SVG
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => handleCopyShareLink(whiteboard, e)}
+                        disabled={sharingId() === whiteboard.id}
+                      >
+                        <LinkIcon class="w-4 h-4 mr-2" />
+                        复制分享链接
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          // TODO: 实现编辑标题功能
+                        }}
+                      >
+                        <PencilIcon class="w-4 h-4 mr-2" />
+                        编辑标题
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={(e) => handleDelete(whiteboard.id, e)}
+                        disabled={deletingId() === whiteboard.id}
+                        variant="destructive"
+                      >
+                        <TrashIcon class="w-4 h-4 mr-2" />
+                        删除
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </CardHeader>
               <CardContent class="flex-1 flex flex-col justify-between">
