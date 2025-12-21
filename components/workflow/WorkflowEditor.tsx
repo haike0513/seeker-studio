@@ -23,6 +23,7 @@ import { WorkflowHistoryManager } from "./WorkflowHistoryManager";
 import { WorkflowClipboard } from "./WorkflowClipboard";
 import { validateWorkflow } from "./WorkflowValidator";
 import { WorkflowValidationPanel } from "./WorkflowValidationPanel";
+import { WorkflowRuler } from "./WorkflowRuler";
 
 interface WorkflowEditorProps {
   workflowId?: string;
@@ -54,6 +55,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
   const [selectedEdgeId, setSelectedEdgeId] = createSignal<string | null>(null);
   const [selectedNodeIds, setSelectedNodeIds] = createSignal<string[]>([]);
   const [validationResult, setValidationResult] = createSignal<ReturnType<typeof validateWorkflow> | null>(null);
+  const [viewport, setViewport] = createSignal<{ x: number; y: number; zoom: number }>({ x: 0, y: 0, zoom: 1 });
   let canvasRef: HTMLDivElement | undefined;
   
   // 历史记录管理器
@@ -257,6 +259,20 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
 
   onMount(() => {
     window.addEventListener("keydown", handleKeyDown);
+    
+    // 初始化 viewport（从 DOM 读取）
+    setTimeout(() => {
+      const paneElement = document.querySelector(".solid-flow__pane") as HTMLElement;
+      if (paneElement) {
+        interface Viewport {
+          x: number;
+          y: number;
+          zoom: number;
+        }
+        const vp = ((paneElement as HTMLElement & { __viewport?: Viewport }).__viewport) || { x: 0, y: 0, zoom: 1 };
+        setViewport(vp);
+      }
+    }, 100); // 延迟一点，等待 SolidFlow 初始化完成
   });
 
   onCleanup(() => {
@@ -639,7 +655,7 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
         
         <div
           ref={canvasRef}
-          class="h-full w-full"
+          class="h-full w-full relative"
           onDragOver={(event) => {
             // 允许节点从面板拖拽到画布上
             event.preventDefault();
@@ -651,18 +667,45 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
             event.preventDefault();
             const dt = event.dataTransfer;
             // 优先读取自定义 MIME 类型，读取不到时回退到 text/plain
+            if(!dt) return;
+            // console.log("dt", dt.types);
+            // console.log("dt.getData", dt.getData("application/x-workflow-node-type"));
+            // console.log("dt.getData", dt.getData("text/plain"));
             const type =
               dt?.getData("application/x-workflow-node-type") ||
               dt?.getData("text/plain");
             if (!type) return;
 
-            const rect = canvasRef?.getBoundingClientRect();
-            const position = rect
-              ? {
-                  x: event.clientX - rect.left,
-                  y: event.clientY - rect.top,
-                }
-              : undefined;
+            // console.log("type", type);
+
+            // 获取画布 pane 元素（实际应用 transform 的元素）
+            const paneElement = document.querySelector(".solid-flow__pane") as HTMLElement;
+            if (!paneElement) {
+              handleAddNode(type as WorkflowNode["type"]);
+              return;
+            }
+
+            // 获取 viewport 信息（从 DOM 属性中读取，由 SolidFlow 设置）
+            interface Viewport {
+              x: number;
+              y: number;
+              zoom: number;
+            }
+            const viewport = ((paneElement as HTMLElement & { __viewport?: Viewport }).__viewport) || { x: 0, y: 0, zoom: 1 };
+
+            // 获取 pane 的边界框（屏幕坐标）
+            const paneRect = paneElement.getBoundingClientRect();
+
+            // 将屏幕坐标转换为画布世界坐标
+            // pane 的 transform: translate(viewport.x, viewport.y) scale(viewport.zoom)
+            // 所以：screenX = (worldX * zoom) + viewport.x + paneLeft
+            // 因此：worldX = (screenX - paneLeft - viewport.x) / zoom
+            const position = {
+              x: (event.clientX - paneRect.left - viewport.x) / viewport.zoom,
+              y: (event.clientY - paneRect.top - viewport.y) / viewport.zoom,
+            };
+
+            // console.log("dropEvent", event);
 
             handleAddNode(type as WorkflowNode["type"], position);
           }}
@@ -673,7 +716,6 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
               ...e,
               selected: e.id === selectedEdgeId(),
             }))}
-            fitView
             nodeTypes={{
               // 注册所有节点类型使用自定义组件
               start: WorkflowNodeComponent,
@@ -731,12 +773,18 @@ export function WorkflowEditor(props: WorkflowEditorProps) {
             onConnect={handleConnect}
             onEdgeClick={handleEdgeClick}
             onPaneClick={handlePaneClick}
+            onMove={(event, viewport) => {
+              setViewport(viewport);
+            }}
             nodesDraggable
           >
             <Controls />
             <MiniMap />
             <Background variant="dots" />
           </SolidFlow>
+          
+          {/* 标尺组件 */}
+          <WorkflowRuler viewport={viewport()} />
         </div>
 
         {/* 节点面板 - 仅在没有外部布局时显示 */}
