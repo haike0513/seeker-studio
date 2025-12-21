@@ -32,6 +32,7 @@ import {
   CollapsibleTrigger,
 } from "@/registry/ui/collapsible";
 import { usePageContext } from "vike-solid/usePageContext";
+import { navigate } from "vike/client/router";
 import { session, signOut, mutateSession, setSSRInitialSession } from "@/lib/auth-client";
 import { Button } from "@/registry/ui/button";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
@@ -547,7 +548,7 @@ function SidebarUserSection() {
     setLoading(true);
     try {
       await signOut();
-      window.location.href = "/";
+      navigate("/");
     } catch (err) {
       console.error("登出失败:", err);
     } finally {
@@ -632,7 +633,7 @@ function HeaderUserSection() {
     setLoading(true);
     try {
       await signOut();
-      window.location.href = "/";
+      navigate("/");
     } catch (err) {
       console.error("登出失败:", err);
     } finally {

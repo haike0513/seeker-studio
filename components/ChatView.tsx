@@ -1,6 +1,8 @@
 import { createEffect, createSignal, For, Show, createResource } from "solid-js";
 import type { UIMessage } from "ai";
 import { useChat } from "@/lib/ai/solidjs";
+import { usePageContext } from "vike-solid/usePageContext";
+import { navigate } from "vike/client/router";
 import { Button } from "@/registry/ui/button";
 import { ChatFileUpload } from "@/components/features/chat/ChatFileUpload";
 import { FileAttachmentDisplay } from "@/components/features/chat/FileAttachmentDisplay";
@@ -23,6 +25,7 @@ interface ChatViewProps {
 }
 
 export function ChatView(props: ChatViewProps) {
+  const pageContext = usePageContext();
   const chatId = () => props.chatId;
 
   // 将后端的 ChatMessage 转换为 UIMessage（AI SDK v6 的前端消息格式）
@@ -137,8 +140,8 @@ export function ChatView(props: ChatViewProps) {
             });
 
             if (response.ok && response.body) {
-              // 与附件发送保持一致，先简单刷新以获取完整历史和附件信息
-              window.location.reload();
+              // 与附件发送保持一致，导航到当前路径以触发数据重新获取
+              navigate(pageContext.urlPathname);
             }
           } else {
             // 无附件时直接通过 AI SDK 的 sendMessage 走流式
@@ -190,8 +193,8 @@ export function ChatView(props: ChatViewProps) {
       });
 
       if (response.ok && response.body) {
-        // 处理流式响应，暂时刷新页面
-        window.location.reload();
+        // 处理流式响应，导航到当前路径以触发数据重新获取
+        navigate(pageContext.urlPathname);
       }
     } else {
       // 没有附件，使用正常的 sendMessage

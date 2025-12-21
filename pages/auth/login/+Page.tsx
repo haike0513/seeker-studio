@@ -1,6 +1,7 @@
 import { createSignal, Show } from "solid-js";
 import { session, signIn } from "@/lib/auth-client";
 import { usePageContext } from "vike-solid/usePageContext";
+import { navigate } from "vike/client/router";
 import { Button } from "@/registry/ui/button";
 import {
   TextField,
@@ -61,8 +62,8 @@ export default function LoginPage() {
       await new Promise((resolve) => setTimeout(resolve, 100));
       // 登录成功后跳转到首页或返回页面
       const returnTo = pageContext.urlParsed.search?.returnTo || "/";
-      // 使用 window.location 确保页面完全刷新并更新会话状态
-      window.location.href = returnTo;
+      // 使用 navigate 进行客户端路由导航
+      navigate(returnTo);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "登录失败，请检查邮箱和密码";

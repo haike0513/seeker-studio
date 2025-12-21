@@ -302,13 +302,14 @@ app.post("/api/whiteboard/chat", async (c) => {
 
 可用的操作类型：
 1. 创建元素 (create)：
-   - type: "rectangle" | "circle" | "line" | "text" | "pen"
+   - type: "rectangle" | "circle" | "diamond" | "line" | "arrow" | "text" | "pen"
    - x, y: 坐标位置
    - width, height: 尺寸（圆形时width和height相等，表示直径）
    - text: 文本内容（仅用于text类型）
    - color: 颜色，十六进制格式（如 #ff0000）
    - strokeWidth: 笔触宽度
    - fontSize: 字体大小（仅用于text类型）
+   - fill: 填充颜色（可选，仅用于rectangle、circle、diamond）
 
 2. 清空画板 (clear)：无参数
 
@@ -576,14 +577,35 @@ app.get("/api/whiteboards/:id/export/svg", async (c) => {
     const strokeWidth = typeof el.strokeWidth === "number" ? el.strokeWidth : 2;
     const fontSize = typeof el.fontSize === "number" ? el.fontSize : 16;
     const text = typeof el.text === "string" ? el.text : "";
+    const fill = typeof el.fill === "string" && el.fill ? el.fill : "none";
 
     if (type === "rectangle") {
-      svg += `  <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"/>\n`;
+      svg += `  <rect x="${x}" y="${y}" width="${width}" height="${height}" fill="${fill}" stroke="${color}" stroke-width="${strokeWidth}"/>\n`;
     } else if (type === "circle") {
       const radius = (width || height) / 2;
       const cx = x + radius;
       const cy = y + radius;
-      svg += `  <circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${color}" stroke-width="${strokeWidth}"/>\n`;
+      svg += `  <circle cx="${cx}" cy="${cy}" r="${radius}" fill="${fill}" stroke="${color}" stroke-width="${strokeWidth}"/>\n`;
+    } else if (type === "diamond") {
+      const centerX = x + width / 2;
+      const centerY = y + height / 2;
+      const points = `${centerX},${y} ${x + width},${centerY} ${centerX},${y + height} ${x},${centerY}`;
+      svg += `  <polygon points="${points}" fill="${fill}" stroke="${color}" stroke-width="${strokeWidth}"/>\n`;
+    } else if (type === "arrow") {
+      const x1 = x;
+      const y1 = y;
+      const x2 = x + width;
+      const y2 = y + height;
+      // 计算箭头方向
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const arrowLength = 20;
+      const arrowWidth = 10;
+      const arrowX1 = x2 - arrowLength * Math.cos(angle) + arrowWidth * Math.sin(angle);
+      const arrowY1 = y2 - arrowLength * Math.sin(angle) - arrowWidth * Math.cos(angle);
+      const arrowX2 = x2 - arrowLength * Math.cos(angle) - arrowWidth * Math.sin(angle);
+      const arrowY2 = y2 - arrowLength * Math.sin(angle) + arrowWidth * Math.cos(angle);
+      const pathData = `M ${x1} ${y1} L ${x2} ${y2} M ${arrowX1} ${arrowY1} L ${x2} ${y2} L ${arrowX2} ${arrowY2}`;
+      svg += `  <path d="${pathData}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>\n`;
     } else if ((type === "line" || type === "pen") && Array.isArray(el.path) && el.path.length >= 2) {
       const pathData = el.path
         .map((point: unknown, idx: number) => {

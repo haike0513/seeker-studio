@@ -11,7 +11,7 @@ import {
   selectElement,
   deleteElement,
 } from "@/lib/whiteboard/store.js";
-import { isPointInElement, pathToSVGPath, getElementBounds } from "@/lib/whiteboard/draw.js";
+import { isPointInElement, pathToSVGPath, getElementBounds, arrowToSVGPath, getDiamondPoints } from "@/lib/whiteboard/draw.js";
 import type { DrawingElement } from "@/lib/whiteboard/types.js";
 
 interface WhiteboardCanvasProps {
@@ -77,6 +77,7 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
       color: color(),
       strokeWidth: strokeWidth(),
       fontSize: fontSize(),
+      fill: undefined, // 将在 addElement 中根据 fillColor 设置
     };
 
     if (currentTool === "pen" || currentTool === "eraser") {
@@ -221,7 +222,7 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
               height={element.height}
               stroke={element.color}
               stroke-width={element.strokeWidth}
-              fill="none"
+              fill={element.fill || "none"}
             />
             {isSelected && (
               <>
@@ -274,7 +275,7 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
               ry={radiusY}
               stroke={element.color}
               stroke-width={element.strokeWidth}
-              fill="none"
+              fill={element.fill || "none"}
             />
             {isSelected && (
               <>
@@ -312,6 +313,101 @@ export default function WhiteboardCanvas(props: WhiteboardCanvasProps) {
           </g>
         );
       }
+
+      case "arrow":
+        if (element.width === undefined || element.height === undefined) return null;
+        return (
+          <g>
+            <path
+              d={arrowToSVGPath(
+                element.x,
+                element.y,
+                element.x + element.width,
+                element.y + element.height,
+                20,
+                10
+              )}
+              stroke={element.color}
+              stroke-width={element.strokeWidth}
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            {isSelected && bounds && (
+              <>
+                <rect
+                  x={bounds.x - 4}
+                  y={bounds.y - 4}
+                  width={bounds.width + 8}
+                  height={bounds.height + 8}
+                  fill="none"
+                  stroke="#3b82f6"
+                  stroke-width="2"
+                  stroke-dasharray="5,5"
+                />
+                <circle
+                  cx={element.x}
+                  cy={element.y}
+                  r="4"
+                  fill="#3b82f6"
+                  stroke="white"
+                  stroke-width="1"
+                />
+                <circle
+                  cx={element.x + element.width}
+                  cy={element.y + element.height}
+                  r="4"
+                  fill="#3b82f6"
+                  stroke="white"
+                  stroke-width="1"
+                />
+              </>
+            )}
+          </g>
+        );
+
+      case "diamond":
+        if (element.width === undefined || element.height === undefined) return null;
+        return (
+          <g>
+            <polygon
+              points={getDiamondPoints(element.x, element.y, element.width, element.height)}
+              stroke={element.color}
+              stroke-width={element.strokeWidth}
+              fill={element.fill || "none"}
+            />
+            {isSelected && (
+              <>
+                <polygon
+                  points={getDiamondPoints(element.x - 4, element.y - 4, element.width + 8, element.height + 8)}
+                  fill="none"
+                  stroke="#3b82f6"
+                  stroke-width="2"
+                  stroke-dasharray="5,5"
+                />
+                <For
+                  each={[
+                    [element.x + element.width / 2, element.y],
+                    [element.x + element.width, element.y + element.height / 2],
+                    [element.x + element.width / 2, element.y + element.height],
+                    [element.x, element.y + element.height / 2],
+                  ]}
+                >
+                  {([x, y]) => (
+                    <circle
+                      cx={x}
+                      cy={y}
+                      r="4"
+                      fill="#3b82f6"
+                      stroke="white"
+                      stroke-width="1"
+                    />
+                  )}
+                </For>
+              </>
+            )}
+          </g>
+        );
 
       case "line":
         if (element.width === undefined || element.height === undefined) return null;

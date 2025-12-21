@@ -1,5 +1,6 @@
 import { Show, Index, createSignal, createResource } from "solid-js";
 import { usePageContext } from "vike-solid/usePageContext";
+import { navigate } from "vike/client/router";
 import { session } from "@/lib/auth-client";
 import { Button } from "@/registry/ui/button";
 import { Motion } from "solid-motionone";
@@ -153,7 +154,7 @@ export function ChatSessionList() {
 
       // 如果当前正处于被删除的会话页面，跳回会话首页
       if (pageContext.urlPathname === `/chat/${id}`) {
-        window.location.href = "/chat";
+        navigate("/chat");
       } else {
         // 本地移除被删除的会话
         setChats((prev) => (prev ?? []).filter((c) => c.id !== id));

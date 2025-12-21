@@ -1,6 +1,7 @@
 import { createSignal, Show } from "solid-js";
 import { signUp, session } from "@/lib/auth-client";
 import { usePageContext } from "vike-solid/usePageContext";
+import { navigate } from "vike/client/router";
 import { Button } from "@/registry/ui/button";
 import {
   TextField,
@@ -84,7 +85,7 @@ export default function RegisterPage() {
       await new Promise((resolve) => setTimeout(resolve, 100));
       // 注册成功后跳转到首页
       const returnTo = pageContext.urlParsed.search?.returnTo || "/";
-      window.location.href = returnTo;
+      navigate(returnTo);
     } catch (err) {
       const message = err instanceof Error ? err.message : "注册失败，请稍后重试";
       setError(message);

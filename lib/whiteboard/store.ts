@@ -19,6 +19,7 @@ const createInitialState = (): WhiteboardState => ({
   color: "#000000",
   strokeWidth: 2,
   fontSize: 16,
+  fillColor: "", // 空字符串表示无填充
   history: [[]],
   historyIndex: 0,
 });
@@ -33,6 +34,7 @@ export const tool = createMemo(() => state().tool);
 export const color = createMemo(() => state().color);
 export const strokeWidth = createMemo(() => state().strokeWidth);
 export const fontSize = createMemo(() => state().fontSize);
+export const fillColor = createMemo(() => state().fillColor);
 export const canUndo = createMemo(() => state().historyIndex > 0);
 export const canRedo = createMemo(() => {
   const s = state();
@@ -46,10 +48,12 @@ export const updateState = (updates: Partial<WhiteboardState>) => {
 
 // 添加元素
 export const addElement = (element: Omit<DrawingElement, "id">) => {
-  const newElement: DrawingElement = {
-    ...element,
-    id: nanoid(),
-  };
+    const newElement: DrawingElement = {
+      ...element,
+      id: nanoid(),
+      // 如果元素已经有 fill 属性则使用它，否则根据 fillColor 设置
+      fill: element.fill !== undefined ? element.fill : (state().fillColor || undefined),
+    };
   
   const newElements = [...state().elements, newElement];
   const newHistory = state().history.slice(0, state().historyIndex + 1);
@@ -129,6 +133,11 @@ export const setStrokeWidth = (width: number) => {
 // 设置字体大小
 export const setFontSize = (size: number) => {
   updateState({ fontSize: size });
+};
+
+// 设置填充颜色
+export const setFillColor = (fill: string) => {
+  updateState({ fillColor: fill });
 };
 
 // 撤销

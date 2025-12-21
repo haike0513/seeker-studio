@@ -1,6 +1,8 @@
 import { createEffect, createSignal, For, Show, createResource } from "solid-js";
 import type { UIMessage } from "ai";
 import { useChat } from "@/lib/ai/solidjs";
+import { usePageContext } from "vike-solid/usePageContext";
+import { navigate } from "vike/client/router";
 import { Button } from "@/registry/ui/button";
 import { ChatFileUpload } from "@/components/features/chat/ChatFileUpload";
 import { FileAttachmentDisplay } from "@/components/features/chat/FileAttachmentDisplay";
@@ -26,6 +28,7 @@ interface WhiteboardAIDialogProps {
 }
 
 export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) {
+  const pageContext = usePageContext();
   const chatId = () => props.chatId;
   const collapsed = () => props.collapsed ?? false;
 
@@ -269,7 +272,8 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
       });
 
       if (response.ok && response.body) {
-        window.location.reload();
+        // 导航到当前路径以触发数据重新获取
+        navigate(pageContext.urlPathname);
       }
     } else {
       // 没有附件，使用正常的 sendMessage

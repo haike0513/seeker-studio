@@ -3,6 +3,7 @@
  */
 
 import { createResource, createSignal, For, Show } from "solid-js";
+import { navigate } from "vike/client/router";
 import { Button } from "@/registry/ui/button";
 import {
   AlertDialog,
@@ -56,7 +57,7 @@ export default function WorkflowListPage() {
 
       const created = data.data as Workflow;
       toast.success("工作流创建成功！");
-      window.location.href = `/workflow/${created.id}`;
+      navigate(`/workflow/${created.id}`);
     } catch (error) {
       console.error("Create workflow error:", error);
       toast.error("创建失败");

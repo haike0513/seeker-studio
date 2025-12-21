@@ -1,6 +1,7 @@
 import type { Data } from "./+data";
 import { createSignal } from "solid-js";
 import { useData } from "vike-solid/useData";
+import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { Link } from "@/components/Link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
@@ -203,7 +204,9 @@ export function WhiteboardList() {
     try {
       let shareUrl = "";
       if (whiteboard.shareToken) {
-        shareUrl = `${window.location.origin}/whiteboard/shared/${whiteboard.shareToken}`;
+        // 使用 pageContext 获取 origin，如果没有则使用环境变量或默认值
+        const baseUrl = pageContext.urlOrigin || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+        shareUrl = `${baseUrl}/whiteboard/shared/${whiteboard.shareToken}`;
       } else {
         // 启用分享
         const res = await fetch(`/api/whiteboards/${whiteboard.id}/share`, {

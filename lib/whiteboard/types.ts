@@ -1,5 +1,5 @@
 // 画板工具类型
-export type DrawingTool = "select" | "pen" | "rectangle" | "circle" | "line" | "text" | "eraser";
+export type DrawingTool = "select" | "pen" | "rectangle" | "circle" | "line" | "arrow" | "diamond" | "text" | "eraser";
 
 // 绘制元素类型
 export interface DrawingElement {
@@ -14,6 +14,7 @@ export interface DrawingElement {
   fontSize?: number;
   color: string;
   strokeWidth: number;
+  fill?: string; // 填充颜色，如果为空则不填充
   rotation?: number;
 }
 
@@ -25,6 +26,7 @@ export interface WhiteboardState {
   color: string;
   strokeWidth: number;
   fontSize: number;
+  fillColor: string; // 填充颜色，空字符串表示无填充
   history: DrawingElement[][];
   historyIndex: number;
 }

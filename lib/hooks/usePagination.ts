@@ -5,6 +5,8 @@
 
 import { createSignal, createResource, createMemo, type Accessor } from "solid-js";
 import { useData } from "vike-solid/useData";
+import { usePageContext } from "vike-solid/usePageContext";
+import { navigate } from "vike/client/router";
 import type { PaginatedResponse } from "@/types/api";
 
 export interface UsePaginationOptions<T> {
@@ -170,6 +172,7 @@ function normalizeInitialData<T>(
  * 分页 Hook
  */
 export function usePagination<T>(options: UsePaginationOptions<T>): UsePaginationReturn<T> {
+  const pageContext = usePageContext();
   const {
     apiUrl,
     pageSize: initialPageSize = 12,
@@ -184,13 +187,24 @@ export function usePagination<T>(options: UsePaginationOptions<T>): UsePaginatio
   
   // 从 URL 或初始数据获取当前页码
   const getInitialPage = (): number => {
-    if (typeof window !== "undefined" && syncUrl) {
-      const url = new URL(window.location.href);
-      const pageParam = url.searchParams.get("page");
+    if (syncUrl) {
+      // 优先使用 pageContext 中的 URL 参数
+      const pageParam = pageContext.urlParsed.search?.page;
       if (pageParam) {
-        const page = parseInt(pageParam, 10);
+        const page = typeof pageParam === "string" ? parseInt(pageParam, 10) : Number(pageParam);
         if (!isNaN(page) && page > 0) {
           return page;
+        }
+      }
+      // 降级到 window.location（仅在客户端）
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        const pageParam = url.searchParams.get("page");
+        if (pageParam) {
+          const page = parseInt(pageParam, 10);
+          if (!isNaN(page) && page > 0) {
+            return page;
+          }
         }
       }
     }
@@ -204,7 +218,9 @@ export function usePagination<T>(options: UsePaginationOptions<T>): UsePaginatio
   const [paginationData, { refetch }] = createResource(
     () => page(),
     async (currentPage) => {
-      const url = new URL(apiUrl, typeof window !== "undefined" ? window.location.origin : "http://localhost");
+      // 使用 pageContext 的 origin，如果没有则使用环境变量或默认值
+      const baseUrl = pageContext.urlOrigin || (typeof window !== "undefined" ? window.location.origin : "http://localhost");
+      const url = new URL(apiUrl, baseUrl);
       url.searchParams.set("page", currentPage.toString());
       url.searchParams.set("pageSize", pageSize.toString());
 
@@ -234,10 +250,13 @@ export function usePagination<T>(options: UsePaginationOptions<T>): UsePaginatio
       setPageSignal(newPage);
       
       // 同步 URL
-      if (syncUrl && typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.set("page", newPage.toString());
-        window.history.pushState({}, "", url.toString());
+      if (syncUrl) {
+        // 使用 navigate 更新 URL，保持查询参数
+        const currentPath = pageContext.urlPathname;
+        const currentSearch = new URLSearchParams(pageContext.urlParsed.searchOriginal || "");
+        currentSearch.set("page", newPage.toString());
+        const newUrl = `${currentPath}?${currentSearch.toString()}`;
+        navigate(newUrl);
       }
     }
   };
