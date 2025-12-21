@@ -95,6 +95,9 @@
   --code-number: oklch(0.6 0 0);
   --selection: oklch(0.8 0.2 250);
   --selection-foreground: oklch(0.145 0 0);
+  --spacing: 0.25rem;
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --vis-tooltip-padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
   --vis-tooltip-box-shadow: var(--shadow-xl);
   --vis-tooltip-background-color: var(--color-background);
@@ -146,6 +149,9 @@
   --code-number: oklch(0.7 0 0);
   --selection: oklch(0.5 0.2 250);
   --selection-foreground: oklch(0.985 0 0);
+  --spacing: 0.25rem;
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 @layer base {
