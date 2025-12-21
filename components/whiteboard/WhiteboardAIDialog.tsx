@@ -11,7 +11,6 @@ import type {
   FileAttachment,
   FollowUpSuggestion,
   ChatMessage,
-  CreateChatRequest,
 } from "@/types/chat";
 import {
   addElement,
@@ -19,7 +18,7 @@ import {
   deleteElement,
   updateElement,
 } from "@/lib/whiteboard/store.js";
-import type { DrawingElement } from "@/lib/whiteboard/types.js";
+import type { DrawingElement, DrawingTool } from "@/lib/whiteboard/types.js";
 
 interface WhiteboardAIDialogProps {
   chatId?: string;
@@ -140,7 +139,7 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
       case "create":
         if (instruction.type) {
           const element: Omit<DrawingElement, "id"> = {
-            type: instruction.type as any,
+            type: instruction.type as DrawingTool,
             x: instruction.x ?? 100,
             y: instruction.y ?? 100,
             width: instruction.width,
@@ -326,7 +325,7 @@ export default function WhiteboardAIDialog(props: WhiteboardAIDialogProps = {}) 
       }`}
     >
       {/* 标题栏（拖动句柄） */}
-      <div
+      <div 
         data-draggable-handle
         class="flex items-center justify-between p-3 border-b border-border shrink-0 cursor-move hover:bg-muted/50 transition-colors"
       >

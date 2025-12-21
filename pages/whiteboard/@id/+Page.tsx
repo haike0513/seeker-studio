@@ -4,7 +4,6 @@ import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { WhiteboardCanvas, WhiteboardToolbar } from "@/components/whiteboard";
 import WhiteboardAIDialog from "@/components/whiteboard/WhiteboardAIDialog";
-import { useDraggable } from "@/lib/whiteboard/useDraggable";
 import { importData, setAutoSaveCallback, elements } from "@/lib/whiteboard/store";
 import { Button } from "@/registry/ui/button";
 import {
@@ -33,100 +32,240 @@ export default function WhiteboardPage() {
 
   let containerRef: HTMLDivElement | undefined;
 
-  // 工具栏拖动（相对于屏幕）
-  const toolbarDrag = useDraggable({
-    initialX: 16,
-    initialY: 16,
-    // 不设置 boundary，使用窗口边界
+  // 工具栏拖动（使用 sticky + transform 偏移，左上角定位）
+  const [toolbarOffsetX, setToolbarOffsetX] = createSignal(0);
+  const [toolbarOffsetY, setToolbarOffsetY] = createSignal(0);
+  const [isToolbarDragging, setIsToolbarDragging] = createSignal(false);
+
+  let toolbarDragStartX = 0;
+  let toolbarDragStartY = 0;
+  let toolbarDragStartOffsetX = 0;
+  let toolbarDragStartOffsetY = 0;
+
+  // 获取工具栏尺寸
+  const getToolbarSize = () => {
+    const isCollapsed = toolbarCollapsed();
+    // 工具栏宽度大约 320px (max-w-xs)，高度根据内容变化，估算
+    return {
+      width: isCollapsed ? 120 : 320,
+      height: isCollapsed ? 60 : 500, // 估算高度
+    };
+  };
+
+  // 约束工具栏位置，确保在画布可视区域内
+  const constrainToolbarOffset = (offsetX: number, offsetY: number) => {
+    if (!containerRef) return { x: offsetX, y: offsetY };
+
+    const containerRect = containerRef.getBoundingClientRect();
+    const { width, height } = getToolbarSize();
+    const padding = 24; // sticky 的 top 和 left 都是 24px
+
+    // 计算允许的偏移范围
+    // 由于是 sticky 定位在左上角，初始位置是 top: 24px, left: 24px
+    // transform translate 向右为正（+X），向下为正（+Y）
+    
+    // offsetX 约束：
+    // - 初始位置（offsetX=0）：工具栏左边缘距离容器左边缘 = padding
+    // - 最大向右偏移：工具栏右边缘刚好贴容器右边缘
+    const maxOffsetX = containerRect.width - width - padding;
+    const minOffsetX = -padding; // 向左移动不能超出左边界
+
+    // offsetY 约束：
+    // - 初始位置（offsetY=0）：工具栏上边缘距离容器上边缘 = padding
+    // - 最大向下偏移：工具栏下边缘刚好贴容器下边缘
+    const maxOffsetY = containerRect.height - height - padding;
+    const minOffsetY = -padding; // 向上移动不能超出上边界
+
+    return {
+      x: Math.max(minOffsetX, Math.min(offsetX, maxOffsetX)),
+      y: Math.max(minOffsetY, Math.min(offsetY, maxOffsetY)),
+    };
+  };
+
+  // 处理工具栏拖动开始
+  const handleToolbarMouseDown = (e: MouseEvent) => {
+    // 只响应在拖动句柄上的点击
+    const target = e.target as HTMLElement;
+    const isDraggableArea = target.closest("[data-draggable-handle]");
+    if (!isDraggableArea && !target.hasAttribute("data-draggable-handle")) {
+      return;
+    }
+    
+    // 如果点击的是按钮，不触发拖动
+    if (target.closest("button") || target.tagName === "BUTTON") {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    setIsToolbarDragging(true);
+    toolbarDragStartX = e.clientX;
+    toolbarDragStartY = e.clientY;
+    toolbarDragStartOffsetX = toolbarOffsetX();
+    toolbarDragStartOffsetY = toolbarOffsetY();
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - toolbarDragStartX;
+      const deltaY = e.clientY - toolbarDragStartY;
+      const newOffsetX = toolbarDragStartOffsetX + deltaX;
+      const newOffsetY = toolbarDragStartOffsetY + deltaY;
+      
+      // 约束位置
+      const { x, y } = constrainToolbarOffset(newOffsetX, newOffsetY);
+      setToolbarOffsetX(x);
+      setToolbarOffsetY(y);
+    };
+
+    const handleMouseUp = () => {
+      setIsToolbarDragging(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  // 监听工具栏折叠状态变化，重新约束位置确保工具栏在可视区域内
+  createEffect(() => {
+    // 读取折叠状态以触发响应式更新
+    toolbarCollapsed();
+    
+    // 使用 requestAnimationFrame 确保 DOM 已更新尺寸
+    requestAnimationFrame(() => {
+      if (!containerRef) return;
+      
+      // 重新约束当前位置
+      const currentX = toolbarOffsetX();
+      const currentY = toolbarOffsetY();
+      const { x, y } = constrainToolbarOffset(currentX, currentY);
+      
+      // 如果位置需要调整，更新位置
+      if (x !== currentX || y !== currentY) {
+        setToolbarOffsetX(x);
+        setToolbarOffsetY(y);
+      }
+    });
   });
 
-  // AI 对话框拖动（相对于屏幕）
-  const aiDialogDrag = useDraggable({
-    initialX: 0,
-    initialY: 0,
-    // 不设置 boundary，使用窗口边界
-  });
+  // AI 对话框拖动（使用 sticky + transform 偏移）
+  const [aiDialogOffsetX, setAiDialogOffsetX] = createSignal(0);
+  const [aiDialogOffsetY, setAiDialogOffsetY] = createSignal(0);
+  const [isDragging, setIsDragging] = createSignal(false);
 
-  // 跟踪用户是否手动拖动过 AI 对话框
-  const [aiDialogDraggedByUser, setAiDialogDraggedByUser] = createSignal(false);
-  
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let dragStartOffsetX = 0;
+  let dragStartOffsetY = 0;
+
   // 获取对话框尺寸
   const getDialogSize = () => {
     const isCollapsed = aiDialogCollapsed();
     return {
-      width: isCollapsed ? 64 : 384, // 收缩: w-16 = 64px, 展开: w-96 = 384px
-      height: isCollapsed ? 64 : 600, // 收缩: h-16 = 64px, 展开: h-[600px] = 600px
+      width: isCollapsed ? 64 : 384,
+      height: isCollapsed ? 64 : 600,
     };
   };
 
-  // 约束对话框位置，确保完全在屏幕内
-  const constrainDialogPosition = (x: number, y: number) => {
-    const { width, height } = getDialogSize();
-    const padding = 16;
-    
-    // 计算最大允许位置
-    const maxX = window.innerWidth - width - padding;
-    const maxY = window.innerHeight - height - padding;
-    
-    // 确保位置在屏幕内
-    const constrainedX = Math.max(padding, Math.min(x, maxX));
-    const constrainedY = Math.max(padding, Math.min(y, maxY));
-    
-    return { x: constrainedX, y: constrainedY };
-  };
+  // 约束对话框位置，确保在画布可视区域内
+  const constrainDialogOffset = (offsetX: number, offsetY: number) => {
+    if (!containerRef) return { x: offsetX, y: offsetY };
 
-  // 初始化 AI 对话框位置（屏幕右下角）
-  const initializeAIDialogPosition = () => {
+    const containerRect = containerRef.getBoundingClientRect();
     const { width, height } = getDialogSize();
-    const padding = 16;
-    const targetX = window.innerWidth - width - padding;
-    const targetY = window.innerHeight - height - padding;
+    const padding = 24; // sticky 的 bottom 和 margin-right 都是 24px
+
+    // 计算允许的偏移范围
+    // 由于是 sticky 定位在右下角，初始位置是 bottom: 24px, right: 24px（通过 margin-right: 24px 实现）
+    // transform translate 向右为正（+X），向下为正（+Y）
     
-    const { x, y } = constrainDialogPosition(targetX, targetY);
-    aiDialogDrag.setPosition(x, y);
+    // offsetX 约束：
+    // - 初始位置（offsetX=0）：对话框右边缘距离容器右边缘 = 24px
+    // - 最大向右偏移：对话框右边缘刚好贴容器右边缘，offsetX = containerRect.width - width - padding
+    // - 最大向左偏移：对话框左边缘刚好贴容器左边缘，offsetX = -(containerRect.width - width - padding)
+    const maxOffsetX = containerRect.width - width - padding;
+    const minOffsetX = -(containerRect.width - width - padding);
+
+    // offsetY 约束：
+    // - 初始位置（offsetY=0）：对话框下边缘距离容器下边缘 = padding
+    // - 最大向下偏移：offsetY = 0（保持 sticky 的 bottom: padding）
+    // - 最大向上偏移：对话框上边缘刚好贴容器上边缘
+    //   初始位置距离底部 padding，向上移动 (containerRect.height - height - padding) 后上边缘贴顶部
+    const maxOffsetY = 0;
+    const minOffsetY = -(containerRect.height - height - padding);
+
+    return {
+      x: Math.max(minOffsetX, Math.min(offsetX, maxOffsetX)),
+      y: Math.max(minOffsetY, Math.min(offsetY, maxOffsetY)),
+    };
   };
 
   // 处理 AI 对话框拖动开始
   const handleAIDialogMouseDown = (e: MouseEvent) => {
-    setAiDialogDraggedByUser(true);
-    aiDialogDrag.handleMouseDown(e);
+    // 只响应在拖动句柄上的点击
+    const target = e.target as HTMLElement;
+    const isDraggableArea = target.closest("[data-draggable-handle]");
+    if (!isDraggableArea && !target.hasAttribute("data-draggable-handle")) {
+      return;
+    }
+    
+    // 如果点击的是按钮，不触发拖动
+    if (target.closest("button") || target.tagName === "BUTTON") {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    setIsDragging(true);
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragStartOffsetX = aiDialogOffsetX();
+    dragStartOffsetY = aiDialogOffsetY();
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - dragStartX;
+      const deltaY = e.clientY - dragStartY;
+      const newOffsetX = dragStartOffsetX + deltaX;
+      const newOffsetY = dragStartOffsetY + deltaY;
+      
+      // 约束位置
+      const { x, y } = constrainDialogOffset(newOffsetX, newOffsetY);
+      setAiDialogOffsetX(x);
+      setAiDialogOffsetY(y);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
   };
 
-  // 监听拖动状态变化，在拖动结束后约束位置
-  createEffect(() => {
-    const isDragging = aiDialogDrag.isDragging();
-    if (!isDragging) {
-      // 拖动结束，约束位置确保对话框在屏幕内
-      const currentX = aiDialogDrag.x();
-      const currentY = aiDialogDrag.y();
-      const { x, y } = constrainDialogPosition(currentX, currentY);
-      
-      // 如果位置需要调整，更新位置
-      if (x !== currentX || y !== currentY) {
-        aiDialogDrag.setPosition(x, y);
-      }
-    }
-  });
-
-  // 监听折叠状态变化，自动调整位置确保在屏幕内
+  // 监听折叠状态变化，重新约束位置确保对话框在可视区域内
   createEffect(() => {
     // 读取折叠状态以触发响应式更新
     aiDialogCollapsed();
     
-    if (!aiDialogDraggedByUser()) {
-      // 用户没有拖动过，重新初始化位置
-      initializeAIDialogPosition();
-    } else {
-      // 用户拖动过，只约束位置确保在屏幕内
-      const currentX = aiDialogDrag.x();
-      const currentY = aiDialogDrag.y();
-      const { x, y } = constrainDialogPosition(currentX, currentY);
+    // 使用 requestAnimationFrame 确保 DOM 已更新尺寸
+    requestAnimationFrame(() => {
+      if (!containerRef) return;
       
-      // 如果位置发生了变化，更新位置
+      // 重新约束当前位置
+      const currentX = aiDialogOffsetX();
+      const currentY = aiDialogOffsetY();
+      const { x, y } = constrainDialogOffset(currentX, currentY);
+      
+      // 如果位置需要调整，更新位置
       if (x !== currentX || y !== currentY) {
-        aiDialogDrag.setPosition(x, y);
+        setAiDialogOffsetX(x);
+        setAiDialogOffsetY(y);
       }
-    }
+    });
   });
 
   // 保存画板数据到服务器
@@ -366,8 +505,8 @@ export default function WhiteboardPage() {
 
     // 检查是否有分享链接
     if (whiteboard?.shareToken) {
-      // 使用 pageContext 获取 origin，如果没有则使用环境变量或默认值
-      const baseUrl = pageContext.urlOrigin || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+      // 使用 window.location.origin 获取 origin
+      const baseUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
       setShareUrl(`${baseUrl}/whiteboard/shared/${whiteboard.shareToken}`);
     }
 
@@ -378,32 +517,6 @@ export default function WhiteboardPage() {
       });
     }
 
-    // 初始化 AI 对话框位置（屏幕右下角）
-    initializeAIDialogPosition();
-    
-    // 监听窗口大小变化，确保对话框始终在屏幕内
-    const handleResize = () => {
-      if (!aiDialogDraggedByUser()) {
-        // 用户没有拖动过，重新初始化位置到右下角
-        initializeAIDialogPosition();
-      } else {
-        // 用户拖动过后，约束位置确保对话框在屏幕内
-        const currentX = aiDialogDrag.x();
-        const currentY = aiDialogDrag.y();
-        const { x, y } = constrainDialogPosition(currentX, currentY);
-        
-        // 如果位置需要调整，更新位置
-        if (x !== currentX || y !== currentY) {
-          aiDialogDrag.setPosition(x, y);
-        }
-      }
-    };
-    
-    window.addEventListener("resize", handleResize);
-    
-    onCleanup(() => {
-      window.removeEventListener("resize", handleResize);
-    });
     try {
       const res = await fetch("/api/chats", {
         method: "POST",
@@ -498,42 +611,49 @@ export default function WhiteboardPage() {
       </div>
 
       {/* 主要内容区域 */}
-      <div ref={containerRef} class="flex-1 min-h-0 overflow-hidden relative">
+      <div ref={containerRef} class="flex-1 min-h-0 relative overflow-hidden">
         {/* 画布区域 */}
         <div class="absolute inset-0">
           <WhiteboardCanvas />
         </div>
-      </div>
 
-      {/* 悬浮工具栏（固定定位，相对于屏幕） */}
-      <div
-        class="fixed z-10"
-        style={{
-          left: `${toolbarDrag.x()}px`,
-          top: `${toolbarDrag.y()}px`,
-        }}
-        onMouseDown={toolbarDrag.handleMouseDown}
-      >
-        <WhiteboardToolbar
-          collapsed={toolbarCollapsed()}
-          onToggleCollapse={() => setToolbarCollapsed(!toolbarCollapsed())}
-        />
-      </div>
+        {/* 悬浮工具栏和 AI 对话框（使用 sticky 定位 + transform 拖动） */}
+        <div class="absolute inset-0 pointer-events-none">
+          <div class="h-full flex flex-col">
+            {/* 工具栏（左上角） */}
+            <div 
+              class="sticky top-6 left-6 pointer-events-auto z-10 w-fit" 
+              style={{ 
+                transform: `translate(${toolbarOffsetX()}px, ${toolbarOffsetY()}px)`,
+                transition: isToolbarDragging() ? "none" : "transform 0.2s ease-out"
+              }}
+              onMouseDown={handleToolbarMouseDown}
+            >
+              <WhiteboardToolbar
+                collapsed={toolbarCollapsed()}
+                onToggleCollapse={() => setToolbarCollapsed(!toolbarCollapsed())}
+              />
+            </div>
 
-      {/* 悬浮 AI 对话框（固定定位，相对于屏幕） */}
-      <div
-        class="fixed z-20"
-        style={{
-          left: `${aiDialogDrag.x()}px`,
-          top: `${aiDialogDrag.y()}px`,
-        }}
-        onMouseDown={handleAIDialogMouseDown}
-      >
-        <WhiteboardAIDialog
-          chatId={chatId()}
-          collapsed={aiDialogCollapsed()}
-          onToggleCollapse={() => setAIDialogCollapsed(!aiDialogCollapsed())}
-        />
+            {/* AI 对话框（右下角） */}
+            <div class="flex-1" />
+            <div 
+              class="sticky bottom-6 ml-auto pointer-events-auto z-20 w-fit" 
+              style={{ 
+                "margin-right": "24px",
+                transform: `translate(${aiDialogOffsetX()}px, ${aiDialogOffsetY()}px)`,
+                transition: isDragging() ? "none" : "transform 0.2s ease-out"
+              }}
+              onMouseDown={handleAIDialogMouseDown}
+            >
+              <WhiteboardAIDialog
+                chatId={chatId()}
+                collapsed={aiDialogCollapsed()}
+                onToggleCollapse={() => setAIDialogCollapsed(!aiDialogCollapsed())}
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
