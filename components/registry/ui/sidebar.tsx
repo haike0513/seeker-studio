@@ -30,15 +30,15 @@ import { combineStyle } from "@/registry/lib/combine-style";
 import { cva, cx } from "@/registry/lib/cva";
 
 import { Button } from "@/components/ui/button";
-import { Drawer, DrawerContent } from "./drawer";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "./skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Tooltip,
   TooltipContent,
   TooltipPortal,
   TooltipTrigger,
-} from "./tooltip";
+} from "@/components/ui/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
