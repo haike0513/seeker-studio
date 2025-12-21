@@ -24,9 +24,9 @@ import { Badge } from "@kobalte/core/badge";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
 import type { VariantProps } from "cva";
 
-import { useIsMobile } from "@/registry/hooks/use-mobile";
-import { callHandler } from "@/registry/lib/call-handler";
-import { combineStyle } from "@/registry/lib/combine-style";
+import { useIsMobile } from "@/lib/hooks/use-mobile";
+import { callHandler } from "@/lib/call-handler";
+import { combineStyle } from "@/lib/combine-style";
 import { cva, cx } from "@/lib/cva";
 
 import { Button } from "@/components/ui/button";
@@ -285,9 +285,9 @@ import type { ButtonProps } from "@/components/ui/button";
 export type SidebarTriggerProps = ButtonProps;
 
 export const SidebarTrigger = (
-  props: SidebarTriggerProps
+  props: SidebarTriggerProps,
 ) => {
-  const [, rest] = splitProps(props, [
+  const [, rest] = splitProps(props as SidebarTriggerProps, [
     "class",
     "onClick",
   ]);
@@ -602,7 +602,7 @@ export const SidebarMenuButtonVariants = cva({
     variant: {
       default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
       outline:
-        "bg-background shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--sidebar-accent)]",
+        "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
     },
     size: {
       default: "h-8 text-sm",
@@ -650,7 +650,7 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
     "size",
     "variant",
     "tooltip",
-  ]);
+  ] as (keyof typeof merge)[]);
   const { isMobile, state } = useSidebar();
 
   return (
@@ -658,6 +658,7 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
       when={!merge.tooltip && state() === "collapsed"}
       fallback={
         <Tooltip placement="right">
+          {/* @ts-expect-error - Complex polymorphic type inference */}
           <TooltipTrigger
             as={merge.as}
             data-slot="sidebar-menu-button"
@@ -668,8 +669,8 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
               size: merge.size,
               variant: merge.variant,
               class: merge.class,
-            })}
-            {...rest}
+            } as Parameters<typeof SidebarMenuButtonVariants>[0])}
+            {...(rest as Record<string, unknown>)}
           />
           <TooltipPortal>
             <TooltipContent
@@ -692,7 +693,7 @@ export const SidebarMenuButton = <T extends ValidComponent = "button">(
           size: merge.size,
           variant: merge.variant,
           class: merge.class,
-        })}
+        } as Parameters<typeof SidebarMenuButtonVariants>[0])}
         {...rest}
       />
     </Show>
