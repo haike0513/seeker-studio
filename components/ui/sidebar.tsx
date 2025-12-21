@@ -27,7 +27,7 @@ import type { VariantProps } from "cva";
 import { useIsMobile } from "@/registry/hooks/use-mobile";
 import { callHandler } from "@/registry/lib/call-handler";
 import { combineStyle } from "@/registry/lib/combine-style";
-import { cva, cx } from "@/registry/lib/cva";
+import { cva, cx } from "@/lib/cva";
 
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";

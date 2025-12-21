@@ -384,7 +384,7 @@
      import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
      import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
      ```
-   - 如果 `components/ui/` 中没有所需组件，再考虑使用 `@/registry/ui/*` 中的组件
+   - 所有 UI 组件现在都在 `components/ui/` 目录下
 
 2. **组件组合**：
    - 复杂 UI 通过组合简单组件构建

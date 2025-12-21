@@ -1,7 +1,7 @@
 import { Show, createSignal, onMount, For } from "solid-js";
 import { session } from "@/lib/auth-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/registry/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Progress, ProgressLabel, ProgressValueLabel } from "@/components/ui/progress";

@@ -3,7 +3,7 @@ import { Show, splitProps } from "solid-js"
 import { FileField as FileFieldPrimitive } from "@kobalte/core/file-field"
 import type { VariantProps } from "cva"
 
-import { cx } from "@/registry/lib/cva"
+import { cx } from "@/lib/cva"
 
 import { buttonVariants } from "@/components/ui/button"
 

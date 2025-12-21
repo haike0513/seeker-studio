@@ -10,7 +10,7 @@ import {
   useSearchContext,
 } from "@kobalte/core/search"
 
-import { cx } from "@/registry/lib/cva"
+import { cx } from "@/lib/cva"
 
 export const SearchPortal = SearchPrimitive.Portal
 

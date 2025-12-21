@@ -7,7 +7,7 @@ import {
 } from "solid-js"
 import ResizablePrimitive from "@corvu/resizable"
 
-import { cx } from "@/registry/lib/cva"
+import { cx } from "@/lib/cva"
 
 export type ResizableProps<T extends ValidComponent = "div"> = ComponentProps<
   typeof ResizablePrimitive<T>

@@ -19,7 +19,7 @@ import {
   type VisXYContainerProps,
 } from "@unovis/solid"
 
-import { cx } from "@/registry/lib/cva"
+import { cx } from "@/lib/cva"
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: '[data-kb-theme="dark"]' } as const

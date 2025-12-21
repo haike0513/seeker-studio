@@ -7,7 +7,7 @@ import {
 } from "solid-js"
 import OTPFieldPrimitive from "@corvu/otp-field"
 
-import { cx } from "@/registry/lib/cva"
+import { cx } from "@/lib/cva"
 
 export type OTPFieldProps<T extends ValidComponent = "div"> = ComponentProps<
   typeof OTPFieldPrimitive<T>

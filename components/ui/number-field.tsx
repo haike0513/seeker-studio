@@ -2,7 +2,7 @@ import type { ValidComponent, VoidProps } from "solid-js"
 import { splitProps, type ComponentProps } from "solid-js"
 import { NumberField as NumberFieldPrimitive } from "@kobalte/core/number-field"
 
-import { cx } from "@/registry/lib/cva"
+import { cx } from "@/lib/cva"
 
 export type NumberFieldProps<T extends ValidComponent = "div"> = ComponentProps<
   typeof NumberFieldPrimitive<T>

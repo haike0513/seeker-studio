@@ -25,7 +25,7 @@ import {
   SidebarInset,
   SidebarTrigger,
   useSidebar,
-} from "@/registry/ui/sidebar";
+} from "@/components/ui/sidebar";
 import {
   Collapsible,
   CollapsibleContent,
@@ -48,8 +48,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@/registry/ui/avatar";
-import { Toaster } from "@/registry/ui/sonner";
+} from "@/components/ui/avatar";
+import { Toaster } from "@/components/ui/sonner";
 import { ColorModeAdapter } from "@/components/ColorModeAdapter";
 
 export default function Layout(props: { children?: JSX.Element }) {

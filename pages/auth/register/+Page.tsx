@@ -8,7 +8,7 @@ import {
   TextFieldInput,
   TextFieldLabel,
   TextFieldErrorMessage,
-} from "@/registry/ui/text-field";
+} from "@/components/ui/text-field";
 import { Card } from "@/components/ui/card";
 
 export default function RegisterPage() {

@@ -6,7 +6,7 @@ import {
 } from "solid-js"
 import { NavigationMenu as NavigationMenuPrimitive } from "@kobalte/core/navigation-menu"
 
-import { cva, cx } from "@/registry/lib/cva"
+import { cva, cx } from "@/lib/cva"
 
 export const NavigationMenuPortal = NavigationMenuPrimitive.Portal
 

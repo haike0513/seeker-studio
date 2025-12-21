@@ -2,7 +2,7 @@ import type { ComponentProps, ValidComponent } from "solid-js";
 import { Show, splitProps } from "solid-js";
 import { Polymorphic } from "@kobalte/core";
 import type { PolymorphicProps } from "@kobalte/core/polymorphic";
-import { cx } from "@/registry/lib/cva";
+import { cx } from "@/lib/cva";
 
 export type AvatarProps<T extends ValidComponent = "div"> = PolymorphicProps<T>;
 

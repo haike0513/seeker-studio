@@ -6,7 +6,7 @@ import {
 } from "solid-js"
 import { Menubar as MenubarPrimitive } from "@kobalte/core/menubar"
 
-import { cx } from "@/registry/lib/cva"
+import { cx } from "@/lib/cva"
 
 export const MenubarPortal = MenubarPrimitive.Portal
 

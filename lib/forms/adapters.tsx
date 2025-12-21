@@ -18,7 +18,7 @@ import {
   TextFieldDescription,
   type TextFieldProps,
   type TextFieldInputProps,
-} from "@/registry/ui/text-field";
+} from "@/components/ui/text-field";
 
 /**
  * 表单字段组件 Props
