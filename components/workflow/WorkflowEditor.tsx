@@ -10,7 +10,7 @@ import {
   MiniMap,
   type Connection,
 } from "@/lib/xyflow/solid";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { toast } from "somoto";
 import type { Workflow, WorkflowNode, WorkflowEdge } from "@/types/workflow";
 import { WorkflowNodePanel } from "./WorkflowNodePanel";

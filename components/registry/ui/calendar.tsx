@@ -4,7 +4,7 @@ import CalendarPrimitive from "@corvu/calendar"
 
 import { cx } from "@/registry/lib/cva"
 
-import { buttonVariants } from "./button"
+import { buttonVariants } from "@/components/ui/button"
 
 export type CalendarProps = ComponentProps<typeof CalendarPrimitive>
 

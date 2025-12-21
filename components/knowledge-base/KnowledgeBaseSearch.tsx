@@ -3,7 +3,7 @@
  */
 
 import { createSignal, For, Show } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/registry/ui/card";
 import { Badge } from "@/registry/ui/badge";
 import { toast } from "somoto";

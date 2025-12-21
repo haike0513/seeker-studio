@@ -2,7 +2,7 @@ import { createSignal, onMount, Show } from "solid-js";
 import { useData } from "vike-solid/useData";
 import { WhiteboardCanvas } from "@/components/whiteboard";
 import { importData } from "@/lib/whiteboard/store";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/registry/ui/alert";
 import { Link } from "@/components/Link";
 import { ArrowLeftIcon, LockIcon } from "lucide-solid";

@@ -4,7 +4,7 @@
  */
 
 import { createSignal, Show, For } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
 import { Badge } from "@/registry/ui/badge";
 import { Progress } from "@/registry/ui/progress";

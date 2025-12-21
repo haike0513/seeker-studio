@@ -6,7 +6,7 @@
 import { createForm, valiForm } from "@modular-forms/solid";
 import { z } from "zod";
 import { Show } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/registry/ui/card";
 import { FormField } from "@/lib/forms";
 import { getFormValues, isFormSubmitting } from "@/lib/forms";

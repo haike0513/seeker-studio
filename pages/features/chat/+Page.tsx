@@ -1,6 +1,6 @@
 import { ChatDemo } from "@/components/features/ChatDemo";
 import { Link } from "@/components/Link";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/registry/ui/badge";
 
 export default function ChatFeaturePage() {

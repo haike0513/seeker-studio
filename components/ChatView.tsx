@@ -3,7 +3,7 @@ import type { UIMessage } from "ai";
 import { useChat } from "@/lib/ai/solidjs";
 import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { ChatFileUpload } from "@/components/features/chat/ChatFileUpload";
 import { FileAttachmentDisplay } from "@/components/features/chat/FileAttachmentDisplay";
 import { MessageReferenceDisplay } from "@/components/features/chat/MessageReferenceDisplay";

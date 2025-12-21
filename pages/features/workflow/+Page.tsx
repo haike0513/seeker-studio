@@ -1,6 +1,6 @@
 import { WorkflowDemo } from "@/components/features/WorkflowDemo";
 import { Link } from "@/components/Link";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/registry/ui/badge";
 
 export default function WorkflowFeaturePage() {

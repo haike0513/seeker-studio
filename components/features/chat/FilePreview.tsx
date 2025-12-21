@@ -4,7 +4,7 @@
  */
 
 import { Show, createSignal } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/registry/ui/dialog";
 import type { FileAttachment } from "@/types/chat";
 

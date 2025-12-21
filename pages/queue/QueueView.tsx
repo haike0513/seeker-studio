@@ -1,7 +1,7 @@
 import { createSignal, createResource, For, Show, Index } from "solid-js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
 import { Badge } from "@/registry/ui/badge";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,

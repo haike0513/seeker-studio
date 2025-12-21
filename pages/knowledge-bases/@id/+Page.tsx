@@ -4,7 +4,7 @@
 
 import { createResource, createSignal, For, Show } from "solid-js";
 import { usePageContext } from "vike-solid/usePageContext";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
 import { Badge } from "@/registry/ui/badge";
 import {

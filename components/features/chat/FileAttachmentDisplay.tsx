@@ -3,7 +3,7 @@
  */
 
 import { Show, For, createSignal } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { FilePreview } from "./FilePreview";
 import type { FileAttachment } from "@/types/chat";
 

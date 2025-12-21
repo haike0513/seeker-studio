@@ -5,7 +5,7 @@ import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { Link } from "@/components/Link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { PaginatedList } from "@/components/PaginatedList";
 import { usePagination } from "@/lib/hooks/usePagination";
 import { PlusIcon, PencilIcon, TrashIcon, MoreVerticalIcon, DownloadIcon, LinkIcon } from "lucide-solid";

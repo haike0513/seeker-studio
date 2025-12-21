@@ -5,7 +5,7 @@ import { navigate } from "vike/client/router";
 import { WhiteboardCanvas, WhiteboardToolbar } from "@/components/whiteboard";
 import WhiteboardAIDialog from "@/components/whiteboard/WhiteboardAIDialog";
 import { importData, setAutoSaveCallback, elements } from "@/lib/whiteboard/store";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,

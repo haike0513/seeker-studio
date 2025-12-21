@@ -3,7 +3,7 @@
  */
 
 import { For, createSignal } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import type { WorkflowNodeType, NodePosition } from "@/types/workflow";
 import { listWorkflowNodeDefinitions } from "./nodeRegistry";
 

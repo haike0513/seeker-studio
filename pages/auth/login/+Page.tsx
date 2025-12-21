@@ -2,7 +2,7 @@ import { createSignal, Show } from "solid-js";
 import { session, signIn } from "@/lib/auth-client";
 import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   TextField,
   TextFieldErrorMessage,

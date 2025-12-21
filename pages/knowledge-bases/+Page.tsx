@@ -3,7 +3,7 @@
  */
 
 import { createResource, createSignal, For, Show } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/registry/ui/card";
 import {
   AlertDialog,

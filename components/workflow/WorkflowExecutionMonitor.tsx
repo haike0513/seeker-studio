@@ -5,7 +5,7 @@
 import { createResource, For, Show } from "solid-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
 import { Badge } from "@/registry/ui/badge";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import type { WorkflowExecutionStatus } from "@/types/workflow";
 
 interface WorkflowExecutionMonitorProps {

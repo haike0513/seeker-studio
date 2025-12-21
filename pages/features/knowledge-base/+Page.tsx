@@ -1,5 +1,5 @@
 import { KnowledgeBaseDemo } from "@/components/features/KnowledgeBaseDemo";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Link } from "@/components/Link";
 
 export default function KnowledgeBaseFeaturePage() {

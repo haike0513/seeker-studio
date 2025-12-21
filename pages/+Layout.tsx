@@ -34,7 +34,7 @@ import {
 import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { session, signOut, mutateSession, setSSRInitialSession } from "@/lib/auth-client";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { pageTransition, prefersReducedMotion } from "@/lib/motion-utils";
 import {

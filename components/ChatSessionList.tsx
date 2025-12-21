@@ -2,7 +2,7 @@ import { Show, Index, createSignal, createResource } from "solid-js";
 import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { session } from "@/lib/auth-client";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Motion } from "solid-motionone";
 import { prefersReducedMotion } from "@/lib/motion-utils";
 import {

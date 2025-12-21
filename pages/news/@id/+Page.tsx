@@ -3,7 +3,7 @@ import type { Data } from "./+data";
 import { Show } from "solid-js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
 import { Badge } from "@/registry/ui/badge";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon, ArrowLeftIcon } from "../icons";
 
 export default function Page() {

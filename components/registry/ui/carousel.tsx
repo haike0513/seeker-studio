@@ -21,8 +21,8 @@ import createEmblaCarousel from "embla-carousel-solid"
 
 import { cx } from "@/registry/lib/cva"
 
-import type { ButtonProps } from "./button"
-import { Button } from "./button"
+import type { ButtonProps } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 
 type CarouselAPI = CreateEmblaCarouselType[1]
 type CreateCarouselParameters = Parameters<typeof createEmblaCarousel>

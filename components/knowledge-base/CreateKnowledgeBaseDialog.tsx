@@ -3,7 +3,7 @@
  */
 
 import { createSignal } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/registry/ui/dialog";
 import { toast } from "somoto";
 

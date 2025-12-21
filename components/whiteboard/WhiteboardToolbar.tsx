@@ -1,5 +1,5 @@
 import { For, Show } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   MousePointer2,
   Pen,

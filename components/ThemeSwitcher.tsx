@@ -5,7 +5,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/registry/ui/popover";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 
 const themes: Array<{ value: Theme; label: string; description: string }> = [
   {

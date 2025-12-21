@@ -3,7 +3,7 @@
  */
 
 import { createSignal, createEffect, For } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import type { ParameterNodeConfig } from "@/types/workflow";
 
 interface ParameterNodeConfigProps {

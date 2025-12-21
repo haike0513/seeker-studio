@@ -55,7 +55,7 @@ const [loginForm, { Form }] = createForm<LoginForm>({
 
 ```tsx
 import { FormField } from "@/lib/forms";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 
 <Form onSubmit={(values) => console.log(values)}>
   <FormField
@@ -137,7 +137,7 @@ import { Button } from "@/registry/ui/button";
 import { createForm, valiForm } from "@modular-forms/solid";
 import { z } from "zod";
 import { FormNativeInput, FormError } from "@/lib/forms";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 
 const chatSchema = z.object({
   message: z.string().min(1, "请输入消息内容"),

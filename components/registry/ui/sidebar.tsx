@@ -29,7 +29,7 @@ import { callHandler } from "@/registry/lib/call-handler";
 import { combineStyle } from "@/registry/lib/combine-style";
 import { cva, cx } from "@/registry/lib/cva";
 
-import { Button } from "./button";
+import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent } from "./drawer";
 import { Separator } from "./separator";
 import { Skeleton } from "./skeleton";
@@ -280,13 +280,14 @@ export const Sidebar = (props: SidebarProps) => {
   );
 };
 
-export type SidebarTriggerProps<T extends ValidComponent = "button"> =
-  ComponentProps<typeof Button<T>>;
+import type { ButtonProps } from "@/components/ui/button";
 
-export const SidebarTrigger = <T extends ValidComponent = "button">(
-  props: SidebarTriggerProps<T>
+export type SidebarTriggerProps = ButtonProps;
+
+export const SidebarTrigger = (
+  props: SidebarTriggerProps
 ) => {
-  const [, rest] = splitProps(props as SidebarTriggerProps, [
+  const [, rest] = splitProps(props, [
     "class",
     "onClick",
   ]);

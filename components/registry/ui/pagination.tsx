@@ -12,8 +12,8 @@ import {
 
 import { cx } from "@/registry/lib/cva"
 
-import type { ButtonProps } from "./button"
-import { buttonVariants } from "./button"
+import type { ButtonProps } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 
 export const PaginationItems = PaginationPrimitive.Items
 

@@ -3,7 +3,7 @@
  */
 
 import { createSignal, For, Show } from "solid-js";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import type { Node } from "@/lib/xyflow/solid";
 
 interface WorkflowVariable {

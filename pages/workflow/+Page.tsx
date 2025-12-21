@@ -4,7 +4,7 @@
 
 import { createResource, createSignal, For, Show } from "solid-js";
 import { navigate } from "vike/client/router";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,

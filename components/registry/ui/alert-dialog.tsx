@@ -4,7 +4,7 @@ import { AlertDialog as AlertDialogPrimitive } from "@kobalte/core/alert-dialog"
 
 import { cx } from "@/registry/lib/cva"
 
-import { buttonVariants } from "./button"
+import { buttonVariants } from "@/components/ui/button"
 
 export const AlertDialogPortal = AlertDialogPrimitive.Portal
 

@@ -3,7 +3,7 @@
  */
 
 import { Link } from "@/components/Link";
-import { Button } from "@/registry/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
 
 export function ChatDemo() {
