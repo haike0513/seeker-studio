@@ -30,7 +30,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/registry/ui/collapsible";
+} from "@/components/ui/collapsible";
 import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { session, signOut, mutateSession, setSSRInitialSession } from "@/lib/auth-client";
@@ -43,7 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/registry/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   Avatar,
   AvatarFallback,

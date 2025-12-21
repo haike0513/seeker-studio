@@ -5,8 +5,8 @@
 import { createResource, For, Show } from "solid-js";
 import { usePageContext } from "vike-solid/usePageContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "@/components/Link";
 import { toast } from "somoto";
 import type { Document, DocumentSegment } from "@/types/knowledge-base";

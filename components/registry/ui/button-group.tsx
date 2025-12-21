@@ -9,7 +9,7 @@ import type { VariantProps } from "cva"
 
 import { cva, cx } from "@/registry/lib/cva"
 
-import { Separator, type SeparatorProps } from "./separator"
+import { Separator, type SeparatorProps } from "@/components/ui/separator"
 
 export const buttonGroupVariants = cva({
   base: [

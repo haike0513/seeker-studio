@@ -9,7 +9,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/registry/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { saveInitialChatPayload } from "@/lib/chat/initial-payload";
 
 // 分类标签数据

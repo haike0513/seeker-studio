@@ -1,9 +1,9 @@
 import { createSignal, Show, For } from "solid-js";
 import { Dynamic } from "solid-js/web";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/registry/ui/badge";
-import { Separator } from "@/registry/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Link } from "@/components/Link";
 import { FileUploadDemo } from "@/components/features/FileUploadDemo";
 import { ChatDemo } from "@/components/features/ChatDemo";

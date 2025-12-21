@@ -9,7 +9,7 @@ import {
   TextFieldInput,
   TextFieldLabel,
 } from "@/registry/ui/text-field";
-import { Card } from "@/registry/ui/card";
+import { Card } from "@/components/ui/card";
 
 export default function LoginPage() {
   const pageContext = usePageContext();

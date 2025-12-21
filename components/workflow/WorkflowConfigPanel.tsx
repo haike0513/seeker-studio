@@ -4,7 +4,7 @@
 
 import { createSignal, createEffect, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { WorkflowNode } from "@/types/workflow";
 import { getWorkflowNodeDefinition, type NodeConfigComponent } from "./nodeRegistry";
 

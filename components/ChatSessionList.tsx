@@ -12,7 +12,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/registry/ui/dialog";
+} from "@/components/ui/dialog";
 
 function PlusIcon() {
   return (

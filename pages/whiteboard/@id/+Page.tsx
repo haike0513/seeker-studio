@@ -12,7 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/registry/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { SaveIcon, CheckIcon, MoreVerticalIcon, DownloadIcon, CopyIcon, UploadIcon, LinkIcon, Link2OffIcon } from "lucide-solid";
 import { toast } from "somoto";
 import type { Data } from "./+data";

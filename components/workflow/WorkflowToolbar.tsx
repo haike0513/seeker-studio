@@ -4,7 +4,7 @@
 
 import { Show } from "solid-js";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/registry/ui/separator";
+import { Separator } from "@/components/ui/separator";
 import { WorkflowExecutionButton } from "./WorkflowExecutionButton";
 import type { Workflow } from "@/types/workflow";
 

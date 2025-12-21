@@ -1,6 +1,6 @@
 import { createSignal, createResource, For, Show, Index } from "solid-js";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -8,7 +8,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/registry/ui/select";
+} from "@/components/ui/select";
 import { RefreshCwIcon, ClockIcon, CheckCircleIcon, XCircleIcon, CircleIcon } from "lucide-solid";
 import type { TaskStatus } from "@/server/queue/types";
 

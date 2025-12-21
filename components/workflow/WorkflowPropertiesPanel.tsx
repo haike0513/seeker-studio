@@ -4,8 +4,8 @@
 
 import { createSignal, createEffect, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Separator } from "@/registry/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "somoto";
 import type { Workflow, WorkflowNode } from "@/types/workflow";
 import { getWorkflowNodeDefinition, type NodeConfigComponent } from "./nodeRegistry";

@@ -4,7 +4,7 @@
 
 import { createSignal, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/registry/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "somoto";
 import { WorkflowExecutionMonitor } from "./WorkflowExecutionMonitor";
 

@@ -3,7 +3,7 @@ import { useData } from "vike-solid/useData";
 import { WhiteboardCanvas } from "@/components/whiteboard";
 import { importData } from "@/lib/whiteboard/store";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/registry/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Link } from "@/components/Link";
 import { ArrowLeftIcon, LockIcon } from "lucide-solid";
 import type { Data } from "./+data";

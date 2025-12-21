@@ -5,9 +5,9 @@
 
 import { createSignal, Show, For } from "solid-js";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
-import { Progress } from "@/registry/ui/progress";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "somoto";
 
 interface UploadedFile {

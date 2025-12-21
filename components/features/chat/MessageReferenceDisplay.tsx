@@ -3,8 +3,8 @@
  */
 
 import { Show, For } from "solid-js";
-import { Card, CardContent } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import type { MessageReference } from "@/types/chat";
 
 interface MessageReferenceDisplayProps {

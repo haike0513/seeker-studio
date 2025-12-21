@@ -3,8 +3,8 @@
  */
 
 import { createResource, For, Show } from "solid-js";
-import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { WorkflowExecutionStatus } from "@/types/workflow";
 

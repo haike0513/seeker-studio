@@ -4,8 +4,8 @@
 
 import { createSignal, For, Show } from "solid-js";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "somoto";
 import type { SearchResult } from "@/types/knowledge-base";
 

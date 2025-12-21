@@ -1,8 +1,8 @@
 import { FileUploadDemo } from "@/components/features/FileUploadDemo";
 import { Link } from "@/components/Link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function FileUploadPage() {
   return (

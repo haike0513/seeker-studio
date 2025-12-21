@@ -5,7 +5,7 @@
 
 import { For } from "solid-js";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { WorkflowNodeType, NodePosition } from "@/types/workflow";
 import { listWorkflowNodeDefinitions } from "./nodeRegistry";
 

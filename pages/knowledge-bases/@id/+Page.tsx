@@ -5,8 +5,8 @@
 import { createResource, createSignal, For, Show } from "solid-js";
 import { usePageContext } from "vike-solid/usePageContext";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,7 +16,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/registry/ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import { Link } from "@/components/Link";
 import { toast } from "somoto";
 import type { KnowledgeBase, Document } from "@/types/knowledge-base";

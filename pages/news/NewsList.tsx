@@ -2,8 +2,8 @@ import type { Data } from "./+data";
 import { For, Show, Index } from "solid-js";
 import { useData } from "vike-solid/useData";
 import { Motion } from "solid-motionone";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { ExternalLinkIcon } from "./icons";
 import { listItemEnter, staggerConfig, prefersReducedMotion } from "@/lib/motion-utils";
 

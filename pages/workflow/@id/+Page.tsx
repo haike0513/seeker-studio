@@ -7,7 +7,7 @@ import { usePageContext } from "vike-solid/usePageContext";
 import { WorkflowEditor } from "@/components/workflow/WorkflowEditor";
 import type { Workflow, WorkflowNode, WorkflowEdge } from "@/types/workflow";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/registry/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Link } from "@/components/Link";
 import { toast } from "somoto";
 import { WorkflowNodeLibrary } from "@/components/workflow/WorkflowNodeLibrary";
@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/registry/ui/dialog";
+} from "@/components/ui/dialog";
 
 export default function WorkflowDetailPage() {
   const pageContext = usePageContext();

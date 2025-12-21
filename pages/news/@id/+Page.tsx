@@ -1,8 +1,8 @@
 import { useData } from "vike-solid/useData";
 import type { Data } from "./+data";
 import { Show } from "solid-js";
-import { Card, CardContent, CardHeader, CardTitle } from "@/registry/ui/card";
-import { Badge } from "@/registry/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExternalLinkIcon, ArrowLeftIcon } from "../icons";
 

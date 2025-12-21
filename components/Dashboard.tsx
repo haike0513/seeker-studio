@@ -1,10 +1,10 @@
 import { Show, createSignal, onMount, For } from "solid-js";
 import { session } from "@/lib/auth-client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/registry/ui/avatar";
-import { Badge } from "@/registry/ui/badge";
-import { Separator } from "@/registry/ui/separator";
-import { Progress, ProgressLabel, ProgressValueLabel } from "@/registry/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Progress, ProgressLabel, ProgressValueLabel } from "@/components/ui/progress";
 
 // 徽章类型定义
 interface BadgeItem {

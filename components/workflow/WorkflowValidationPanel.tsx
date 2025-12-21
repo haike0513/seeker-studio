@@ -3,7 +3,7 @@
  */
 
 import { For, Show } from "solid-js";
-import { Alert, AlertDescription, AlertTitle } from "@/registry/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import type { ValidationResult } from "./WorkflowValidator";
 import { X } from "lucide-solid";
 

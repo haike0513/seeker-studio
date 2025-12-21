@@ -4,7 +4,7 @@ import { useData } from "vike-solid/useData";
 import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { Link } from "@/components/Link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/registry/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PaginatedList } from "@/components/PaginatedList";
 import { usePagination } from "@/lib/hooks/usePagination";
@@ -15,7 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/registry/ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import type { Whiteboard } from "@/database/drizzle/schema/whiteboard";
 import { toast } from "somoto";
 
