@@ -11,12 +11,14 @@ export default function Page() {
     CreateChatRequest["attachments"] | undefined
   >(undefined);
 
+  const chatId = () => pageContext.routeParams?.id;
+
   onMount(() => {
-    const chatId = pageContext.routeParams.id;
-    if (!chatId) return;
+    const id = chatId();
+    if (!id) return;
 
     // 从一次性存储中读取首条消息和附件，并立即消费
-    const payload = consumeInitialChatPayload(chatId);
+    const payload = consumeInitialChatPayload(id);
     if (payload?.message) {
       setInitialMessage(payload.message);
       if (payload.attachments && payload.attachments.length > 0) {
@@ -27,7 +29,7 @@ export default function Page() {
 
   return (
     <ChatView
-      chatId={pageContext.routeParams.id}
+      chatId={chatId()}
       autoSendMessage={initialMessage()}
       initialAttachments={initialAttachments()}
     />

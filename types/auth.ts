@@ -2,7 +2,11 @@
  * 认证相关类型定义
  */
 
-import type { User, Session } from "@/database/drizzle/schema/auth";
+import type { InferSelectModel } from "drizzle-orm";
+import { user, session } from "@/database/drizzle/schema/auth";
+
+export type User = InferSelectModel<typeof user>;
+export type Session = InferSelectModel<typeof session>;
 
 /**
  * 用户信息（用于 API 响应）
