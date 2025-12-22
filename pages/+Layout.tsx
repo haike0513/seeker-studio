@@ -7,30 +7,8 @@ import type { JSX } from "solid-js";
 import { Show, createMemo, createSignal, createEffect, onMount } from "solid-js";
 import { isServer } from "solid-js/web";
 import { Motion } from "solid-motionone";
-import logoUrl from "../assets/logo.svg";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import Sidebar from "@/components/Sidebar";
 import { usePageContext } from "vike-solid/usePageContext";
 import { navigate } from "vike/client/router";
 import { session, signOut, mutateSession, setSSRInitialSession } from "@/lib/auth-client";
@@ -81,8 +59,8 @@ export default function Layout(props: { children?: JSX.Element }) {
   const shouldAnimate = createMemo(() => !prefersReducedMotion());
 
   // Sidebar 状态管理（使用 localStorage 持久化）
-  const SIDEBAR_STORAGE_KEY = "sidebar_state";
-  const [sidebarOpen, setSidebarOpen] = createSignal(false); // 默认收缩状态
+  const SIDEBAR_STORAGE_KEY = "sidebar_collapsed";
+  const [isCollapsed, setIsCollapsed] = createSignal(true); // 默认收缩状态
 
   // 在客户端挂载后从 localStorage 读取上次的状态
   // 使用 onMount 确保只在客户端执行，避免 SSR 水合不匹配
@@ -91,8 +69,8 @@ export default function Layout(props: { children?: JSX.Element }) {
       try {
         const savedState = localStorage.getItem(SIDEBAR_STORAGE_KEY);
         if (savedState !== null) {
-          const isOpen = savedState === "true";
-          setSidebarOpen(isOpen);
+          const collapsed = savedState === "true";
+          setIsCollapsed(collapsed);
         }
       } catch (error) {
         // localStorage 可能不可用（如隐私模式）
@@ -102,11 +80,11 @@ export default function Layout(props: { children?: JSX.Element }) {
   });
 
   // 处理 sidebar 状态变化，保存到 localStorage
-  const handleSidebarOpenChange = (open: boolean) => {
-    setSidebarOpen(open);
+  const handleCollapsedChange = (collapsed: boolean) => {
+    setIsCollapsed(collapsed);
     if (!isServer) {
       try {
-        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(open));
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, String(collapsed));
       } catch (error) {
         // localStorage 可能不可用（如隐私模式）
         console.warn("Failed to save sidebar state to localStorage:", error);
@@ -116,515 +94,42 @@ export default function Layout(props: { children?: JSX.Element }) {
 
   return (
     <ColorModeAdapter>
-      <SidebarProvider
-        defaultOpen={false}
-        open={sidebarOpen()}
-        onOpenChange={handleSidebarOpenChange}
-      >
-      <Sidebar collapsible="icon">
-        <SidebarHeader>
-          <Logo />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>导航</SidebarGroupLabel>
-            <SidebarGroupContent class="mt-2">
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/" icon={HomeIcon} tooltip="Welcome">
-                    Welcome
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/chat" icon={ChatIcon} tooltip="聊天">
-                    聊天
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/workflow" icon={WorkflowIcon} tooltip="工作流">
-                    工作流
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/features" icon={FeaturesIcon} tooltip="平台功能">
-                    平台功能
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarNavLink
-                    href="/knowledge-bases"
-                    icon={() => (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
-                        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-                      </svg>
-                    )}
-                    tooltip="知识库"
-                  >
-                    知识库
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarNavLink href="/whiteboard" icon={WhiteboardIcon} tooltip="画板">
-                    画板
-                  </SidebarNavLink>
-                </SidebarMenuItem>
-                <Collapsible as={SidebarMenuItem} class="group/collapsible">
-                  <SidebarMenuButton as={CollapsibleTrigger} tooltip="Platform">
-                    <DatabaseIcon />
-                    <span>Platform</span>
-                    <ChevronRightIcon class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                  </SidebarMenuButton>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuItem>
-                        <SidebarNavLink
-                          href="/todo"
-                          icon={CheckSquareIcon}
-                          tooltip="Todo"
-                        >
-                          Todo
-                        </SidebarNavLink>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarNavLink
-                          href="/star-wars"
-                          icon={DatabaseIcon}
-                          tooltip="Data Fetching"
-                        >
-                          Data Fetching
-                        </SidebarNavLink>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarNavLink
-                          href="/news"
-                          icon={NewsIcon}
-                          tooltip="新闻"
-                        >
-                          新闻
-                        </SidebarNavLink>
-                      </SidebarMenuItem>
-                      <SidebarMenuItem>
-                        <SidebarNavLink
-                          href="/queue"
-                          icon={QueueIcon}
-                          tooltip="任务队列"
-                        >
-                          任务队列
-                        </SidebarNavLink>
-                      </SidebarMenuItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </Collapsible>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-        <SidebarFooter>
-          <SidebarUserSection />
-          <SidebarToggleButton />
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset class="flex flex-col h-svh overflow-hidden">
-        <header class="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
-          <SidebarTrigger />
-          <div class="flex items-center gap-2">
-            <ThemeSwitcher />
-            <HeaderUserSection />
-          </div>
-        </header>
-        <div class="flex-1 overflow-y-auto">
-          <Show
-            when={shouldAnimate()}
-            fallback={
-              <div class="p-5 pb-12">
-                {props.children}
-              </div>
-            }
-          >
-            <Motion.div
-              class="p-5 pb-0 h-full min-h-0"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={pageTransition}
+      <div class="flex h-screen overflow-hidden">
+        <Sidebar isCollapsed={isCollapsed} setIsCollapsed={handleCollapsedChange} />
+        <div class="flex flex-col flex-1 overflow-hidden">
+          <header class="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
+            <div class="flex items-center gap-2">
+              <ThemeSwitcher />
+              <HeaderUserSection />
+            </div>
+          </header>
+          <div class="flex-1 overflow-y-auto">
+            <Show
+              when={shouldAnimate()}
+              fallback={
+                <div class="p-5 pb-12">
+                  {props.children}
+                </div>
+              }
             >
-              {props.children}
-            </Motion.div>
-          </Show>
+              <Motion.div
+                class="p-5 pb-0 h-full min-h-0"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={pageTransition}
+              >
+                {props.children}
+              </Motion.div>
+            </Show>
+          </div>
         </div>
-      </SidebarInset>
+      </div>
       <Toaster />
-    </SidebarProvider>
     </ColorModeAdapter>
   );
 }
 
-function SidebarNavLink(props: {
-  href: string;
-  children: string;
-  icon: () => JSX.Element;
-  tooltip: string;
-}) {
-  const pageContext = usePageContext();
-  const isActive = createMemo(() =>
-    props.href === "/"
-      ? pageContext.urlPathname === props.href
-      : pageContext.urlPathname.startsWith(props.href)
-  );
-
-  return (
-    <SidebarMenuButton
-      as="a"
-      href={props.href}
-      isActive={isActive()}
-      tooltip={props.tooltip}
-    >
-      <props.icon />
-      <span>{props.children}</span>
-    </SidebarMenuButton>
-  );
-}
-
-function SidebarToggleButton() {
-  const { toggleSidebar, state } = useSidebar();
-
-  return (
-    <SidebarMenuButton
-      onClick={toggleSidebar}
-      tooltip={state() === "expanded" ? "收起侧边栏" : "展开侧边栏"}
-    >
-      <Show when={state() === "expanded"} fallback={<ChevronRightIcon />}>
-        <ChevronLeftIcon />
-      </Show>
-      <Show when={state() === "expanded"}>
-        <span>收起</span>
-      </Show>
-    </SidebarMenuButton>
-  );
-}
-
-function Logo() {
-  const { state } = useSidebar();
-  return (
-    <div class="flex items-center gap-2 px-2 py-1.5">
-      <a href="/" class="flex items-center gap-2">
-        <img src={logoUrl} height={32} width={32} alt="logo" class="rounded-lg" />
-        <Show when={state() === "expanded"}>
-          <span class="font-semibold text-lg">Seeker Studio</span>
-        </Show>
-      </a>
-    </div>
-  );
-}
-
-// Icons
-function HomeIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  );
-}
-
-function CheckSquareIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <polyline points="9 11 12 14 22 4" />
-      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
-    </svg>
-  );
-}
-
-function QueueIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect width="4" height="4" x="3" y="3" rx="1" />
-      <rect width="4" height="4" x="11" y="3" rx="1" />
-      <rect width="4" height="4" x="19" y="3" rx="1" />
-      <rect width="4" height="4" x="3" y="11" rx="1" />
-      <rect width="4" height="4" x="11" y="11" rx="1" />
-      <rect width="4" height="4" x="19" y="11" rx="1" />
-      <rect width="4" height="4" x="3" y="19" rx="1" />
-      <rect width="4" height="4" x="11" y="19" rx="1" />
-      <rect width="4" height="4" x="19" y="19" rx="1" />
-    </svg>
-  );
-}
-
-function DatabaseIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <ellipse cx="12" cy="5" rx="9" ry="3" />
-      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
-      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
-    </svg>
-  );
-}
-
-function NewsIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
-      <path d="M18 14h-8" />
-      <path d="M15 18h-5" />
-      <path d="M10 6h8v4h-8V6Z" />
-    </svg>
-  );
-}
-
-function WorkflowIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-      <line x1="10" y1="6.5" x2="14" y2="6.5" />
-      <line x1="10" y1="17.5" x2="14" y2="17.5" />
-      <line x1="17.5" y1="10" x2="17.5" y2="14" />
-      <line x1="6.5" y1="10" x2="6.5" y2="14" />
-    </svg>
-  );
-}
-
-function ChatIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
-function FeaturesIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect x="3" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="3" width="7" height="7" rx="1" />
-      <rect x="14" y="14" width="7" height="7" rx="1" />
-      <rect x="3" y="14" width="7" height="7" rx="1" />
-    </svg>
-  );
-}
-
-function WhiteboardIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <path d="M9 9h6M9 15h6M9 12h6" />
-    </svg>
-  );
-}
-
-function ChevronLeftIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <polyline points="15 18 9 12 15 6" />
-    </svg>
-  );
-}
-
-function ChevronRightIcon(props: { class?: string }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class={`size-4 ${props.class || ""}`}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <polyline points="9 18 15 12 9 6" />
-    </svg>
-  );
-}
-
-function SidebarUserSection() {
-  const [loading, setLoading] = createSignal(false);
-
-  const handleSignOut = async () => {
-    setLoading(true);
-    try {
-      await signOut();
-      navigate("/");
-    } catch (err) {
-      console.error("登出失败:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Show
-      when={session()?.user}
-      fallback={
-        <SidebarMenuButton as="a" href="/auth/login" tooltip="登录">
-          <LogInIcon />
-          <span>登录</span>
-        </SidebarMenuButton>
-      }
-    >
-      <div class="space-y-2">
-        <div class="px-2 py-1.5">
-          <div class="text-sm font-medium truncate">
-            {session()?.user?.name || session()?.user?.email}
-          </div>
-          <div class="text-xs text-muted-foreground truncate">
-            {session()?.user?.email}
-          </div>
-        </div>
-        <SidebarMenuButton
-          onClick={handleSignOut}
-          disabled={loading()}
-          tooltip="登出"
-        >
-          <LogOutIcon />
-          <span>登出</span>
-        </SidebarMenuButton>
-      </div>
-    </Show>
-  );
-}
-
-function LogInIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-      <polyline points="10 17 15 12 10 7" />
-      <line x1="15" x2="3" y1="12" y2="12" />
-    </svg>
-  );
-}
-
-function LogOutIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      class="size-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-      <polyline points="16 17 21 12 16 7" />
-      <line x1="21" x2="9" y1="12" y2="12" />
-    </svg>
-  );
-}
 
 function HeaderUserSection() {
   const [loading, setLoading] = createSignal(false);
@@ -1027,6 +532,42 @@ function MessageSquareIcon() {
       stroke-linejoin="round"
     >
       <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function ChatIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function LogOutIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      class="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" x2="9" y1="12" y2="12" />
     </svg>
   );
 }
