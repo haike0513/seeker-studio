@@ -2,10 +2,16 @@
  * 工作流详情页面 - 专业编辑器布局
  */
 
-import { createEffect, createResource, createSignal, Show } from "solid-js";
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  onCleanup,
+  Show,
+} from "solid-js";
 import { usePageContext } from "vike-solid/usePageContext";
 import { WorkflowEditor } from "@/components/workflow/WorkflowEditor";
-import type { Workflow, WorkflowNode, WorkflowEdge } from "@/types/workflow";
+import type { Workflow, WorkflowEdge, WorkflowNode } from "@/types/workflow";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "@/components/Link";
@@ -29,15 +35,33 @@ export default function WorkflowDetailPage() {
   const [name, setName] = createSignal("");
   const [description, setDescription] = createSignal("");
   const [savingMeta, setSavingMeta] = createSignal(false);
-  const [selectedNode, setSelectedNode] = createSignal<WorkflowNode | null>(null);
+  const [selectedNode, setSelectedNode] = createSignal<WorkflowNode | null>(
+    null,
+  );
   const [showPropertiesPanel, setShowPropertiesPanel] = createSignal(true);
   const [showNodeLibrary, setShowNodeLibrary] = createSignal(true);
+  const [collapsedNodeLibrary, setCollapsedNodeLibrary] = createSignal(false);
+  const [collapsedPropertiesPanel, setCollapsedPropertiesPanel] = createSignal(
+    false,
+  );
+  // 拖拽相关状态
+  const [nodeLibraryPos, setNodeLibraryPos] = createSignal({ x: 16, y: 16 }); // left-4 = 16px, top-4 = 16px
+  const [propertiesPanelPos, setPropertiesPanelPos] = createSignal({
+    x: 0, // 将在 createEffect 中初始化
+    y: 16,
+  });
+  const [dragging, setDragging] = createSignal<
+    "nodeLibrary" | "propertiesPanel" | null
+  >(null);
+  const [dragOffset, setDragOffset] = createSignal({ x: 0, y: 0 });
   const [showImportDialog, setShowImportDialog] = createSignal(false);
-  const [importFileData, setImportFileData] = createSignal<{
-    name: string;
-    nodes: WorkflowNode[];
-    edges: WorkflowEdge[];
-  } | null>(null);
+  const [importFileData, setImportFileData] = createSignal<
+    {
+      name: string;
+      nodes: WorkflowNode[];
+      edges: WorkflowEdge[];
+    } | null
+  >(null);
   const [importing, setImporting] = createSignal(false);
 
   const [workflow, { refetch }] = createResource(
@@ -118,7 +142,9 @@ export default function WorkflowDetailPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${wf.name || "workflow"}_${new Date().toISOString().split("T")[0]}.json`;
+    a.download = `${wf.name || "workflow"}_${
+      new Date().toISOString().split("T")[0]
+    }.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -133,7 +159,10 @@ export default function WorkflowDetailPage() {
       const data = JSON.parse(text);
 
       // 验证数据格式
-      if (!data.workflow || !Array.isArray(data.nodes) || !Array.isArray(data.edges)) {
+      if (
+        !data.workflow || !Array.isArray(data.nodes) ||
+        !Array.isArray(data.edges)
+      ) {
         toast.error("文件格式不正确");
         return;
       }
@@ -198,6 +227,107 @@ export default function WorkflowDetailPage() {
     }
   };
 
+  // 初始化属性面板位置（右侧）
+  createEffect(() => {
+    if (typeof window !== "undefined" && propertiesPanelPos().x === 0) {
+      const containerWidth = window.innerWidth;
+      const panelWidth = 320; // w-80 = 320px
+      setPropertiesPanelPos({
+        x: containerWidth - panelWidth - 16, // right-4 = 16px
+        y: 16,
+      });
+    }
+  });
+
+  // 拖拽处理函数
+  const handleDragStart = (
+    type: "nodeLibrary" | "propertiesPanel",
+    e: MouseEvent,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragging(type);
+
+    const panel = (e.currentTarget as HTMLElement).closest(
+      ".absolute",
+    ) as HTMLElement;
+    const container = document.querySelector(".relative") as HTMLElement;
+
+    if (panel && container) {
+      const panelRect = panel.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+
+      // 计算鼠标相对于容器的位置
+      const mouseX = e.clientX - containerRect.left;
+      const mouseY = e.clientY - containerRect.top;
+
+      // 计算当前面板相对于容器的位置
+      const panelX = panelRect.left - containerRect.left;
+      const panelY = panelRect.top - containerRect.top;
+
+      // 计算偏移量（鼠标在面板内的位置）
+      setDragOffset({
+        x: mouseX - panelX,
+        y: mouseY - panelY,
+      });
+    }
+  };
+
+  const handleDragMove = (e: MouseEvent) => {
+    if (!dragging()) return;
+
+    const container = document.querySelector(".relative") as HTMLElement;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+
+    // 计算鼠标相对于容器的位置
+    const mouseX = e.clientX - containerRect.left;
+    const mouseY = e.clientY - containerRect.top;
+
+    // 计算新位置（鼠标位置减去偏移量）
+    let newX = mouseX - dragOffset().x;
+    let newY = mouseY - dragOffset().y;
+
+    // 限制在容器内
+    const panelWidth = dragging() === "nodeLibrary"
+      ? (collapsedNodeLibrary() ? 48 : 256)
+      : (collapsedPropertiesPanel() ? 48 : 320);
+    const panelHeight = 400; // 估算最小高度
+    const maxX = Math.max(0, containerRect.width - panelWidth);
+    const maxY = Math.max(0, containerRect.height - panelHeight);
+
+    newX = Math.max(0, Math.min(newX, maxX));
+    newY = Math.max(0, Math.min(newY, maxY));
+
+    if (dragging() === "nodeLibrary") {
+      setNodeLibraryPos({ x: newX, y: newY });
+    } else {
+      setPropertiesPanelPos({ x: newX, y: newY });
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDragging(null);
+    setDragOffset({ x: 0, y: 0 });
+  };
+
+  // 全局鼠标事件监听
+  createEffect(() => {
+    if (dragging()) {
+      const handleMouseMove = (e: MouseEvent) => handleDragMove(e);
+      const handleMouseUp = () => handleDragEnd();
+
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+
+      onCleanup(() => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+      });
+    }
+  });
+
   createEffect(() => {
     console.log("workflow", workflow());
   });
@@ -238,7 +368,7 @@ export default function WorkflowDetailPage() {
             onExport={handleExport}
             onImport={handleImport}
           />
-          
+
           {/* 标题和信息栏 */}
           <div class="px-4 py-2 border-t">
             <div class="flex items-center justify-between gap-4">
@@ -251,7 +381,10 @@ export default function WorkflowDetailPage() {
                   placeholder="未命名工作流"
                 />
                 {/* @ts-expect-error - Badge variant type definition issue */}
-                <Badge variant={workflow()!.enabled ? "default" : "outline"} class="shrink-0">
+                <Badge
+                  variant={workflow()!.enabled ? "default" : "outline"}
+                  class="shrink-0"
+                >
                   {workflow()!.enabled ? "已启用" : "未启用"}
                 </Badge>
                 <Show when={workflow()!.isPublic}>
@@ -274,12 +407,10 @@ export default function WorkflowDetailPage() {
           <div class="absolute inset-0">
             <WorkflowEditor
               workflowId={workflowId}
-              initialWorkflow={
-                workflow() as Workflow & {
-                  nodes: WorkflowNode[];
-                  edges: WorkflowEdge[];
-                }
-              }
+              initialWorkflow={workflow() as Workflow & {
+                nodes: WorkflowNode[];
+                edges: WorkflowEdge[];
+              }}
               showToolbar={false}
               onNodeSelect={(node) => {
                 console.log("node", node);
@@ -295,34 +426,194 @@ export default function WorkflowDetailPage() {
 
           {/* 左侧：节点库 - 悬浮卡片 */}
           <Show when={showNodeLibrary()}>
-            <div class="absolute left-4 top-4 bottom-4 w-64 z-10 hidden md:block">
-              <div class="h-full bg-card border rounded-lg shadow-lg overflow-hidden flex flex-col">
-                <WorkflowNodeLibrary
-                  onNodeSelect={(_nodeType, _position) => {
-                    // 节点添加通过拖拽到画布或点击节点库中的节点触发
-                    // 实际添加逻辑在WorkflowEditor的drop和click事件中处理
+            <div
+              class={`absolute z-50 hidden md:block ${
+                dragging() === "nodeLibrary"
+                  ? ""
+                  : "transition-all duration-300"
+              } ${collapsedNodeLibrary() ? "w-12" : "w-64"}`}
+              style={{
+                left: `${nodeLibraryPos().x}px`,
+                top: `${nodeLibraryPos().y}px`,
+                bottom: "16px",
+              }}
+            >
+              <div class="h-full bg-card border rounded-lg shadow-lg overflow-hidden flex flex-col relative">
+                {/* 拖拽手柄 */}
+                <div
+                  class="absolute top-0 left-0 right-0 h-8 cursor-move flex items-center justify-center bg-muted/30 hover:bg-muted/50 transition-colors z-20 select-none"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDragStart("nodeLibrary", e);
                   }}
-                />
+                  onDragStart={(e) => e.preventDefault()}
+                >
+                  <div class="flex gap-1 pointer-events-none">
+                    <div class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                    <div class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                    <div class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                  </div>
+                </div>
+                {collapsedNodeLibrary()
+                  ? (
+                    <div class="h-full flex items-center justify-center pt-8">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCollapsedNodeLibrary(false)}
+                        class="h-12 w-10 p-0 rotate-90"
+                        title="展开节点库"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </Button>
+                    </div>
+                  )
+                  : (
+                    <>
+                      <div class="absolute top-2 right-2 z-30">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCollapsedNodeLibrary(true)}
+                          class="h-8 w-8 p-0"
+                          title="收缩节点库"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <polyline points="15 18 9 12 15 6" />
+                          </svg>
+                        </Button>
+                      </div>
+                      <div class="pt-8 h-full overflow-hidden flex flex-col">
+                        <WorkflowNodeLibrary
+                          onNodeSelect={(_nodeType, _position) => {
+                            // 节点添加通过拖拽到画布或点击节点库中的节点触发
+                            // 实际添加逻辑在WorkflowEditor的drop和click事件中处理
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
               </div>
             </div>
           </Show>
 
           {/* 右侧：属性面板 - 悬浮卡片 */}
           <Show when={showPropertiesPanel()}>
-            <div class="absolute right-4 top-4 bottom-4 w-80 z-10 hidden md:block">
-              <div class="h-full bg-card border rounded-lg shadow-lg overflow-hidden">
-                <WorkflowPropertiesPanel
-                  node={selectedNode()}
-                  workflow={workflow()!}
-                  onUpdate={(updatedNode) => {
-                    setSelectedNode(updatedNode);
-                    // 触发编辑器更新
-                    refetch();
+            <div
+              class={`absolute z-50 hidden md:block ${
+                dragging() === "propertiesPanel"
+                  ? ""
+                  : "transition-all duration-300"
+              } ${collapsedPropertiesPanel() ? "w-12" : "w-80"}`}
+              style={{
+                left: `${propertiesPanelPos().x}px`,
+                top: `${propertiesPanelPos().y}px`,
+                bottom: "16px",
+              }}
+            >
+              <div class="h-full bg-card border rounded-lg shadow-lg overflow-hidden relative">
+                {/* 拖拽手柄 */}
+                <div
+                  class="absolute top-0 left-0 right-0 h-8 cursor-move flex items-center justify-center bg-muted/30 hover:bg-muted/50 transition-colors z-20 select-none"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDragStart("propertiesPanel", e);
                   }}
-                  onClose={() => {
-                    setSelectedNode(null);
-                  }}
-                />
+                  onDragStart={(e) => e.preventDefault()}
+                >
+                  <div class="flex gap-1 pointer-events-none">
+                    <div class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                    <div class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                    <div class="w-1 h-1 rounded-full bg-muted-foreground/40" />
+                  </div>
+                </div>
+                {collapsedPropertiesPanel()
+                  ? (
+                    <div class="h-full flex items-center justify-center pt-8">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setCollapsedPropertiesPanel(false)}
+                        class="h-12 w-10 p-0 -rotate-90"
+                        title="展开属性面板"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="h-4 w-4"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </Button>
+                    </div>
+                  )
+                  : (
+                    <>
+                      <div class="absolute top-2 left-2 z-30">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCollapsedPropertiesPanel(true)}
+                          class="h-8 w-8 p-0"
+                          title="收缩属性面板"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </Button>
+                      </div>
+                      <div class="pt-8 h-full overflow-hidden">
+                        <WorkflowPropertiesPanel
+                          node={selectedNode()}
+                          workflow={workflow()!}
+                          onUpdate={(updatedNode) => {
+                            setSelectedNode(updatedNode);
+                            // 触发编辑器更新
+                            refetch();
+                          }}
+                          onClose={() => {
+                            setSelectedNode(null);
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
               </div>
             </div>
           </Show>
@@ -341,15 +632,21 @@ export default function WorkflowDetailPage() {
           <div class="space-y-2 py-4">
             <div class="text-sm">
               <span class="font-medium">工作流名称：</span>
-              <span class="text-muted-foreground">{importFileData()?.name}</span>
+              <span class="text-muted-foreground">
+                {importFileData()?.name}
+              </span>
             </div>
             <div class="text-sm">
               <span class="font-medium">节点数量：</span>
-              <span class="text-muted-foreground">{importFileData()?.nodes.length || 0}</span>
+              <span class="text-muted-foreground">
+                {importFileData()?.nodes.length || 0}
+              </span>
             </div>
             <div class="text-sm">
               <span class="font-medium">连线数量：</span>
-              <span class="text-muted-foreground">{importFileData()?.edges.length || 0}</span>
+              <span class="text-muted-foreground">
+                {importFileData()?.edges.length || 0}
+              </span>
             </div>
           </div>
           <DialogFooter>
@@ -372,5 +669,3 @@ export default function WorkflowDetailPage() {
     </div>
   );
 }
-
-
