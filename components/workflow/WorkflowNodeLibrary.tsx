@@ -65,7 +65,7 @@ export function WorkflowNodeLibrary(props: WorkflowNodeLibraryProps) {
   };
 
   return (
-    <div class="h-full flex flex-col bg-background">
+    <div class="h-full flex flex-col">
       {/* 标题和搜索 */}
       <div class="p-4 border-b space-y-3">
         <div class="flex items-center justify-between">

@@ -120,7 +120,7 @@ export function WorkflowPropertiesPanel(props: WorkflowPropertiesPanelProps) {
   };
 
   return (
-    <div class="h-full flex flex-col bg-background border-l">
+    <div class="h-full flex flex-col">
       <Show
         when={props.node}
         fallback={

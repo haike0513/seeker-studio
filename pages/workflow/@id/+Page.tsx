@@ -250,12 +250,14 @@ export default function WorkflowDetailPage() {
                   onInput={(e) => setName(e.currentTarget.value)}
                   placeholder="未命名工作流"
                 />
+                {/* @ts-expect-error - Badge variant type definition issue */}
                 <Badge variant={workflow()!.enabled ? "default" : "outline"} class="shrink-0">
                   {workflow()!.enabled ? "已启用" : "未启用"}
                 </Badge>
-                {workflow()!.isPublic && (
+                <Show when={workflow()!.isPublic}>
+                  {/* @ts-expect-error - Badge variant type definition issue */}
                   <Badge variant="outline" class="shrink-0">公开</Badge>
-                )}
+                </Show>
               </div>
               <Link href="/workflow">
                 <Button variant="ghost" size="sm" class="shrink-0">
@@ -266,22 +268,10 @@ export default function WorkflowDetailPage() {
           </div>
         </div>
 
-        {/* 主编辑区域 - 使用Resizable布局 */}
-        <div class="flex-1 min-h-0 flex">
-          {/* 左侧：节点库 */}
-          <Show when={showNodeLibrary()}>
-            <div class="w-64 shrink-0 border-r overflow-hidden">
-              <WorkflowNodeLibrary
-                onNodeSelect={(nodeType, position) => {
-                  // 节点添加通过拖拽到画布或点击节点库中的节点触发
-                  // 实际添加逻辑在WorkflowEditor的drop和click事件中处理
-                }}
-              />
-            </div>
-          </Show>
-
-          {/* 中间：编辑器画布 */}
-          <div class="flex-1 min-w-0">
+        {/* 主编辑区域 - 画布全屏，面板悬浮 */}
+        <div class="flex-1 min-h-0 relative">
+          {/* 编辑器画布 - 全屏 */}
+          <div class="absolute inset-0">
             <WorkflowEditor
               workflowId={workflowId}
               initialWorkflow={
@@ -296,28 +286,44 @@ export default function WorkflowDetailPage() {
                 setSelectedNode(node);
               }}
               selectedNode={selectedNode()}
-              onSave={async (workflowData) => {
+              onSave={async (_workflowData) => {
                 // 保存工作流数据后刷新
                 refetch();
               }}
             />
           </div>
 
-          {/* 右侧：属性面板 */}
+          {/* 左侧：节点库 - 悬浮卡片 */}
+          <Show when={showNodeLibrary()}>
+            <div class="absolute left-4 top-4 bottom-4 w-64 z-10 hidden md:block">
+              <div class="h-full bg-card border rounded-lg shadow-lg overflow-hidden flex flex-col">
+                <WorkflowNodeLibrary
+                  onNodeSelect={(_nodeType, _position) => {
+                    // 节点添加通过拖拽到画布或点击节点库中的节点触发
+                    // 实际添加逻辑在WorkflowEditor的drop和click事件中处理
+                  }}
+                />
+              </div>
+            </div>
+          </Show>
+
+          {/* 右侧：属性面板 - 悬浮卡片 */}
           <Show when={showPropertiesPanel()}>
-            <div class="w-80 shrink-0 border-l overflow-hidden">
-              <WorkflowPropertiesPanel
-                node={selectedNode()}
-                workflow={workflow()!}
-                onUpdate={(updatedNode) => {
-                  setSelectedNode(updatedNode);
-                  // 触发编辑器更新
-                  refetch();
-                }}
-                onClose={() => {
-                  setSelectedNode(null);
-                }}
-              />
+            <div class="absolute right-4 top-4 bottom-4 w-80 z-10 hidden md:block">
+              <div class="h-full bg-card border rounded-lg shadow-lg overflow-hidden">
+                <WorkflowPropertiesPanel
+                  node={selectedNode()}
+                  workflow={workflow()!}
+                  onUpdate={(updatedNode) => {
+                    setSelectedNode(updatedNode);
+                    // 触发编辑器更新
+                    refetch();
+                  }}
+                  onClose={() => {
+                    setSelectedNode(null);
+                  }}
+                />
+              </div>
             </div>
           </Show>
         </div>
