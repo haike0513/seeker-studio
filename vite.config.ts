@@ -4,10 +4,11 @@ import { sentryVitePlugin } from "@sentry/vite-plugin";
 import vike from "vike/plugin";
 import { defineConfig } from "vite";
 import { fileURLToPath } from "url";
-import { telefunc } from "telefunc/vite";
+// import { telefunc } from "telefunc/vite";
 export default defineConfig({
   ssr: {
     // Add problematic npm package here:
+    // external: ["@kobalte/core"],
     noExternal: ["@kobalte/core", "pg-boss"],
   },
   plugins: [
@@ -19,7 +20,7 @@ export default defineConfig({
     }),
     vikeSolid(),
     tailwindcss(),
-    telefunc(),
+    // telefunc(),
   ],
   resolve: {
     alias: {

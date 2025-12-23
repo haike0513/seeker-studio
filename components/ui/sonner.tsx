@@ -1,8 +1,11 @@
-import { useColorMode } from "@kobalte/core"
-import { Toaster as Sonner } from "somoto"
+import { useColorMode } from "@kobalte/core";
+import { Toaster as Sonner } from "somoto";
+import { Show } from "solid-js";
+import { isServer } from "solid-js/web";
 
-export const Toaster = (props: Parameters<typeof Sonner>[0]) => {
-  const { colorMode } = useColorMode()
+// 客户端专用的 Toaster 组件，使用 useColorMode
+function ClientToaster(props: Parameters<typeof Sonner>[0]) {
+  const { colorMode } = useColorMode();
 
   return (
     <Sonner
@@ -101,5 +104,14 @@ export const Toaster = (props: Parameters<typeof Sonner>[0]) => {
       }}
       {...props}
     />
-  )
+  );
 }
+
+// 主 Toaster 组件，在 SSR 时不渲染，避免调用客户端 API
+export const Toaster = (props: Parameters<typeof Sonner>[0]) => {
+  return (
+    <Show when={!isServer}>
+      <ClientToaster {...props} />
+    </Show>
+  );
+};
