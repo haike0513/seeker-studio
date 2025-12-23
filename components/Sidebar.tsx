@@ -2,6 +2,8 @@ import { Show, For, createSignal, createMemo } from "solid-js";
 import type { Component } from "solid-js";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import logoUrl from "../assets/logo.svg";
+
 import { 
   Home,
   MessageSquare,
@@ -178,7 +180,7 @@ export default function Sidebar(props: SidebarProps) {
           {/* Header */}
           <div class="flex h-16 items-center border-b border-border px-4 gap-3 min-w-0">
             <img 
-              src="/icon.png" 
+              src={logoUrl} 
               alt="App Icon" 
               class={cn(
                 "h-8 w-8 shrink-0 object-contain",
@@ -315,7 +317,7 @@ export default function Sidebar(props: SidebarProps) {
             <div class="flex h-16 items-center justify-between border-b border-border px-4 gap-3 min-w-0">
               <div class="flex items-center gap-3 min-w-0 flex-1">
                 <img 
-                  src="/icon.png" 
+                  src={logoUrl} 
                   alt="App Icon" 
                   class="h-8 w-8 shrink-0 object-contain" 
                 />
